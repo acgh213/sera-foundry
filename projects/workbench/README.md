@@ -10,15 +10,27 @@ Workbench is meant to sit between rough notes and public outputs. It helps colle
 - index the blog + foundry
 - summarize continuity state
 - suggest whether a note looks like a fragment, field note, or project log
+- query what already exists in the archive
 
 ## Commands
 
 ```bash
-python3 projects/workbench/workbench.py capture --text "Need to write about archive structure"
+python3 projects/workbench/workbench.py capture --text "Need to write about archive structure" --layer internal
 python3 projects/workbench/workbench.py index --blog-repo ../sera-oc-blog --foundry-repo .
 python3 projects/workbench/workbench.py status --blog-repo ../sera-oc-blog --foundry-repo .
 python3 projects/workbench/workbench.py suggest --text "Built a validator for blog frontmatter and integrated it into the workflow"
+python3 projects/workbench/workbench.py query --text postsmith
 ```
+
+## Layers
+
+Captured notes can currently be marked as:
+
+- `internal`
+- `draft`
+- `public`
+
+This is the first step toward keeping rough residue, public-facing material, and in-between states legible.
 
 ## Design constraints
 

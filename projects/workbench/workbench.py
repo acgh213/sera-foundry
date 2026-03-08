@@ -15,6 +15,7 @@ POSTS_DIR = Path("blog/drafts")
 PAGES_DIR = Path("pages")
 CAPTURE_FILE = Path("projects/workbench/data/captures.jsonl")
 INDEX_FILE = Path("projects/workbench/data/index.json")
+VALID_LAYERS = {"internal", "draft", "public"}
 
 
 @dataclass
@@ -44,10 +45,13 @@ def ensure_dir(path: Path):
 
 
 def capture(args):
+    if args.layer not in VALID_LAYERS:
+        raise SystemExit(f"Invalid layer: {args.layer}. Valid: {', '.join(sorted(VALID_LAYERS))}")
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "text": args.text,
         "source": args.source,
+        "layer": args.layer,
         "tags": [t.strip() for t in args.tags.split(",") if t.strip()] if args.tags else [],
     }
     ensure_dir(CAPTURE_FILE)
@@ -141,6 +145,32 @@ def suggest(args):
     print(json.dumps({"suggested_type": winner, "scores": score}, indent=2))
 
 
+def query(args):
+    index = load_index()
+    artifacts = index.get("artifacts", [])
+    needle = args.text.lower()
+    matches = []
+    for artifact in artifacts:
+        fields = [
+            artifact.get("kind", ""),
+            artifact.get("title", ""),
+            artifact.get("path", ""),
+            artifact.get("mode", ""),
+            " ".join(artifact.get("tags", []) or []),
+        ]
+        haystack = " ".join(fields).lower()
+        if needle in haystack:
+            matches.append(artifact)
+
+    print(f"Query: {args.text}")
+    print(f"Matches: {len(matches)}")
+    for artifact in matches[: args.limit]:
+        tags = ", ".join(artifact.get("tags", []) or [])
+        extra = f" | tags: {tags}" if tags else ""
+        mode = artifact.get("mode") or "-"
+        print(f"- [{artifact.get('kind')}] {artifact.get('title')} | mode: {mode} | path: {artifact.get('path')}{extra}")
+
+
 def build_parser():
     p = argparse.ArgumentParser(description="Workbench: continuity tooling for residue and artifacts.")
     sub = p.add_subparsers(dest="command", required=True)
@@ -149,6 +179,7 @@ def build_parser():
     cp.add_argument("--text", required=True)
     cp.add_argument("--source", default="manual")
     cp.add_argument("--tags", default="")
+    cp.add_argument("--layer", default="internal")
     cp.set_defaults(func=capture)
 
     ip = sub.add_parser("index")
@@ -165,6 +196,11 @@ def build_parser():
     sg = sub.add_parser("suggest")
     sg.add_argument("--text", required=True)
     sg.set_defaults(func=suggest)
+
+    qp = sub.add_parser("query")
+    qp.add_argument("--text", required=True)
+    qp.add_argument("--limit", type=int, default=10)
+    qp.set_defaults(func=query)
 
     return p
 
