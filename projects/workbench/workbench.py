@@ -16,6 +16,7 @@ PAGES_DIR = Path("pages")
 CAPTURE_FILE = Path("projects/workbench/data/captures.jsonl")
 INDEX_FILE = Path("projects/workbench/data/index.json")
 VALID_LAYERS = {"internal", "draft", "public"}
+SUGGEST_TYPES = ("fragment", "field_note", "project_log")
 
 
 @dataclass
@@ -128,21 +129,74 @@ def status(args):
             print(f"  - {mode}: {count}")
 
 
+def score_bucket(score: dict[str, int], reasons: dict[str, list[str]], bucket: str, points: int, reason: str):
+    score[bucket] += points
+    reasons[bucket].append(reason)
+
+
+def classify_text(text: str):
+    lowered = text.lower()
+    score = {k: 0 for k in SUGGEST_TYPES}
+    reasons = {k: [] for k in SUGGEST_TYPES}
+
+    word_count = len(text.split())
+    sentence_count = sum(text.count(ch) for ch in ".!?") or 1
+
+    if word_count <= 18:
+        score_bucket(score, reasons, "fragment", 2, "short, compressed note")
+    elif word_count <= 45:
+        score_bucket(score, reasons, "field_note", 1, "mid-length note with room for observation")
+    else:
+        score_bucket(score, reasons, "project_log", 1, "longer note with room for implementation context")
+
+    if sentence_count <= 2 and word_count <= 24:
+        score_bucket(score, reasons, "fragment", 1, "reads like a compact standalone signal")
+
+    if any(word in lowered for word in ["idea", "thought", "signal", "residue", "glimpse", "fragment"]):
+        score_bucket(score, reasons, "fragment", 2, "contains residue/idea language")
+    if any(phrase in lowered for phrase in ["when it", "what remains", "pressure behind", "leaves residue"]):
+        score_bucket(score, reasons, "fragment", 1, "reads like an aphoristic or compressed thought")
+
+    if any(phrase in lowered for phrase in ["learned", "noticed", "observed", "found that", "while working", "working on", "ran into"]):
+        score_bucket(score, reasons, "field_note", 3, "describes an observation from active work")
+
+    if any(word in lowered for word in ["built", "implemented", "integrated", "tool", "repo", "project", "artifact", "workflow", "cli", "validator"]):
+        score_bucket(score, reasons, "project_log", 3, "mentions concrete implementation or artifacts")
+
+    if any(word in lowered for word in ["status", "shipped", "released", "committed", "pushed", "prototype"]):
+        score_bucket(score, reasons, "project_log", 2, "reads like a status-bearing project update")
+
+    if any(word in lowered for word in ["why", "because", "noticed", "seems", "feels"]):
+        score_bucket(score, reasons, "field_note", 1, "includes reflective/interpretive language")
+
+    if score["project_log"] >= 3:
+        score["fragment"] = max(0, score["fragment"] - 1)
+    if score["field_note"] >= 3:
+        score["fragment"] = max(0, score["fragment"] - 1)
+
+    ranked = sorted(score.items(), key=lambda kv: kv[1], reverse=True)
+    winner, top_score = ranked[0]
+    secondary, second_score = ranked[1]
+    gap = top_score - second_score
+
+    confidence = "low"
+    if top_score >= 5 and gap >= 2:
+        confidence = "high"
+    elif top_score >= 3 and gap >= 1:
+        confidence = "medium"
+
+    return {
+        "suggested_type": winner,
+        "secondary_type": secondary,
+        "confidence": confidence,
+        "scores": score,
+        "reasons": reasons[winner][:4],
+        "secondary_reasons": reasons[secondary][:3],
+    }
+
+
 def suggest(args):
-    text = args.text.lower()
-    score = {"fragment": 0, "field_note": 0, "project_log": 0}
-
-    if len(text) < 180:
-        score["fragment"] += 2
-    if any(word in text for word in ["built", "implemented", "tool", "repo", "project", "artifact"]):
-        score["project_log"] += 2
-    if any(word in text for word in ["learned", "noticed", "observed", "working on", "found that"]):
-        score["field_note"] += 2
-    if any(word in text for word in ["idea", "thought", "residue", "signal", "note"]):
-        score["fragment"] += 1
-
-    winner = sorted(score.items(), key=lambda kv: kv[1], reverse=True)[0][0]
-    print(json.dumps({"suggested_type": winner, "scores": score}, indent=2))
+    print(json.dumps(classify_text(args.text), indent=2))
 
 
 def query(args):

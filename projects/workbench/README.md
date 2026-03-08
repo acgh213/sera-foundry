@@ -32,6 +32,20 @@ Captured notes can currently be marked as:
 
 This is the first step toward keeping rough residue, public-facing material, and in-between states legible.
 
+## Suggestion output
+
+`suggest` now returns:
+
+- a primary suggested type
+- a secondary candidate
+- rough confidence
+- score breakdown
+- brief reasons for the classification
+
+The goal is not perfect intelligence. The goal is legible, useful sorting.
+
+The heuristic is intentionally simple, but it now weighs brevity against implementation language and active-work observation instead of assuming every short note is a fragment.
+
 ## Design constraints
 
 - text-first
