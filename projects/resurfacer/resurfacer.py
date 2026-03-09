@@ -110,31 +110,35 @@ def save_state(state: dict):
     STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def get_artifact_date(artifact: dict) -> datetime | None:
-    """Extract date from artifact, trying filename first."""
+def get_artifact_date(artifact: dict, blog_repo: Path, foundry_repo: Path) -> datetime | None:
+    """Extract date from artifact, trying filename first, then file mtime."""
     path = artifact.get("path", "")
-    
-    # Try filename
+
+    # Try filename first for blog-style dated files
     date = extract_date_from_filename(path)
     if date:
         return date
-    
-    # Could add more extraction logic here if needed
+
+    # Fallback: actual file modification time
+    root = foundry_repo if artifact.get("kind", "").startswith("foundry_") else blog_repo
+    full_path = root / path
+    if full_path.exists():
+        return datetime.fromtimestamp(full_path.stat().st_mtime, tz=timezone.utc)
+
     return None
 
 
 def calculate_days_since(date: datetime | None) -> int:
-    """Calculate days since the date (or return a large number if no date)."""
+    """Calculate days since the date with a conservative fallback for unknown dates."""
     if not date:
-        return 999999  # Very old, so it gets high age score
-    
-    # Make sure we have a timezone-aware datetime
+        return 30
+
     if date.tzinfo is None:
         date = date.replace(tzinfo=timezone.utc)
-    
+
     now = datetime.now(timezone.utc)
     delta = now - date
-    return max(1, delta.days)  # At least 1 day old
+    return max(1, delta.days)
 
 
 def extract_themes_from_artifact(artifact: dict) -> list[str]:
@@ -157,7 +161,7 @@ def extract_themes_from_artifact(artifact: dict) -> list[str]:
     return list(set(matches))  # Remove duplicates
 
 
-def score_artifact(artifact: dict, state: dict, now: datetime) -> ArtifactScore | None:
+def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, foundry_repo: Path) -> ArtifactScore | None:
     """Score a single artifact based on age, themes, and history."""
     
     # Skip excluded kinds
@@ -169,7 +173,7 @@ def score_artifact(artifact: dict, state: dict, now: datetime) -> ArtifactScore 
         return None
     
     path = artifact.get("path", "")
-    artifact_date = get_artifact_date(artifact)
+    artifact_date = get_artifact_date(artifact, blog_repo, foundry_repo)
     age_days = calculate_days_since(artifact_date)
     
     # Base score: prefer older artifacts (log scale to avoid too-old being overwhelming)
@@ -178,10 +182,11 @@ def score_artifact(artifact: dict, state: dict, now: datetime) -> ArtifactScore 
     # Theme score: bonus for matching current themes
     theme_matches = extract_themes_from_artifact(artifact)
     theme_score = len(theme_matches) * 3
-    
-    # Recency penalty: if it's very recent (< 3 days), penalize
+
+    # Recency penalty: if it's very recent, penalize hard enough that resurfacing means recurrence
     if age_days < 3:
-        age_score *= 0.5
+        age_score *= 0.35
+        theme_score *= 0.5
     
     # History penalty: if we've picked it recently, penalize heavily
     recent_picks = state.get("picks", [])
@@ -201,6 +206,8 @@ def score_artifact(artifact: dict, state: dict, now: datetime) -> ArtifactScore 
     reasons = []
     if age_days >= 7:
         reasons.append(f"older artifact ({age_days} days)")
+    elif age_days >= 3:
+        reasons.append(f"not recent ({age_days} days)")
     if theme_matches:
         reasons.append(f"matches themes: {', '.join(theme_matches)}")
     if penalty == 0 and recent_picks:
@@ -230,7 +237,7 @@ def run(args):
     # Score all artifacts
     candidates = []
     for artifact in index.get("artifacts", []):
-        scored = score_artifact(artifact, state, now)
+        scored = score_artifact(artifact, state, now, blog_repo, foundry_repo)
         if scored and scored.score > 0:
             candidates.append(scored)
     

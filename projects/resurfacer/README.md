@@ -16,9 +16,9 @@ Think of it as a form of **active curation through temporal depth**.
 
 Each artifact gets a score based on:
 
-1. **Age** (primary): Older artifacts score higher. Base score scales with days-since-creation (logarithmically capped).
+1. **Age** (primary): Older artifacts score higher. Resurfacer uses dated filenames when available and otherwise falls back to file modification time.
 2. **Themes** (secondary): Artifacts matching current ecosystem themes get bonus points. Current themes include: `continuity`, `residue`, `artifacts`, `workbench`, `postsmith`, `projects`, `drift`, `memory`, `archive`, `persistence`, `foundry`.
-3. **Recency penalty**: Very new artifacts (< 3 days) are penalized. Recently picked artifacts are heavily penalized.
+3. **Recency penalty**: Very new artifacts (< 3 days) are penalized hard enough that resurfacing means recurrence, not just picking the most on-theme thing from yesterday. Recently picked artifacts are also heavily penalized.
 4. **History**: Resurfacer keeps a small state file (`data/resurfacer-state.json`) tracking the last few picks, ensuring the same artifact doesn't get surfaced repeatedly within 2 weeks.
 
 ### Selection
