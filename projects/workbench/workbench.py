@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import sys
 from collections import Counter
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
@@ -17,6 +19,7 @@ CAPTURE_FILE = Path("projects/workbench/data/captures.jsonl")
 INDEX_FILE = Path("projects/workbench/data/index.json")
 VALID_LAYERS = {"internal", "draft", "public"}
 SUGGEST_TYPES = ("fragment", "field_note", "project_log")
+POSTSMITH_PATH = Path("projects/postsmith/postsmith.py")
 
 
 @dataclass
@@ -225,6 +228,63 @@ def query(args):
         print(f"- [{artifact.get('kind')}] {artifact.get('title')} | mode: {mode} | path: {artifact.get('path')}{extra}")
 
 
+def build_promote_command(args):
+    if args.type:
+        chosen = args.type
+    elif args.auto:
+        chosen = classify_text(args.text)["suggested_type"]
+    else:
+        raise SystemExit("promote requires either --type or --auto")
+
+    if chosen not in SUGGEST_TYPES:
+        raise SystemExit(f"Invalid promote type: {chosen}")
+
+    foundry_root = Path(args.foundry_repo).expanduser().resolve()
+    postsmith = foundry_root / POSTSMITH_PATH
+    if not postsmith.exists():
+        raise SystemExit(f"postsmith not found at {postsmith}")
+
+    command = [
+        sys.executable,
+        str(postsmith),
+        "scaffold-post",
+        "--blog-repo",
+        str(Path(args.blog_repo).expanduser().resolve()),
+        "--title",
+        args.title,
+        "--mode",
+        chosen,
+        "--body",
+        args.text,
+        "--privacy",
+        args.privacy,
+    ]
+
+    if args.tags:
+        command.extend(["--tags", args.tags])
+    if args.published:
+        command.append("--published")
+
+    return chosen, command
+
+
+def promote(args):
+    chosen, command = build_promote_command(args)
+    result = {
+        "mode": "execute" if args.execute else "dry_run",
+        "chosen_type": chosen,
+        "postsmith_command": command,
+    }
+
+    if not args.execute:
+        print(json.dumps(result, indent=2))
+        return
+
+    proc = subprocess.run(command, capture_output=True, text=True, check=True)
+    result["created_path"] = proc.stdout.strip()
+    print(json.dumps(result, indent=2))
+
+
 def build_parser():
     p = argparse.ArgumentParser(description="Workbench: continuity tooling for residue and artifacts.")
     sub = p.add_subparsers(dest="command", required=True)
@@ -255,6 +315,19 @@ def build_parser():
     qp.add_argument("--text", required=True)
     qp.add_argument("--limit", type=int, default=10)
     qp.set_defaults(func=query)
+
+    pp = sub.add_parser("promote")
+    pp.add_argument("--text", required=True)
+    pp.add_argument("--title", required=True)
+    pp.add_argument("--type", choices=SUGGEST_TYPES)
+    pp.add_argument("--auto", action="store_true")
+    pp.add_argument("--tags", default="")
+    pp.add_argument("--blog-repo", default="../../sera-oc-blog")
+    pp.add_argument("--foundry-repo", default=".")
+    pp.add_argument("--privacy", default="public")
+    pp.add_argument("--published", action=argparse.BooleanOptionalAction, default=False)
+    pp.add_argument("--execute", action="store_true")
+    pp.set_defaults(func=promote)
 
     return p
 
