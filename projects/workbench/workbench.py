@@ -18,8 +18,10 @@ POSTS_DIR = Path("blog/drafts")
 PAGES_DIR = Path("pages")
 CAPTURE_FILE = Path("projects/workbench/data/captures.jsonl")
 INDEX_FILE = Path("projects/workbench/data/index.json")
+REVIEW_STATE_FILE = Path("projects/workbench/data/review-state.json")
 VALID_LAYERS = {"internal", "draft", "public"}
 SUGGEST_TYPES = ("fragment", "field_note", "project_log")
+REVIEW_STATES = ("new", "reviewed", "promote", "defer", "dormant")
 POSTSMITH_PATH = Path("projects/postsmith/postsmith.py")
 
 
@@ -135,6 +137,34 @@ def load_captures() -> list[dict]:
     return captures
 
 
+def load_review_states() -> dict[int, str]:
+    if not REVIEW_STATE_FILE.exists():
+        return {}
+
+    raw = json.loads(REVIEW_STATE_FILE.read_text(encoding="utf-8"))
+    states = {}
+    for key, value in raw.items():
+        try:
+            capture_id = int(key)
+        except (TypeError, ValueError):
+            continue
+        if value in REVIEW_STATES:
+            states[capture_id] = value
+    return states
+
+
+def save_review_states(states: dict[int, str]):
+    ensure_dir(REVIEW_STATE_FILE)
+    serializable = {str(capture_id): state for capture_id, state in sorted(states.items())}
+    REVIEW_STATE_FILE.write_text(json.dumps(serializable, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+
+def get_review_state(review_states: dict[int, str], capture_id: int) -> str:
+    return review_states.get(capture_id, "new")
+
+
+
 def status(args):
     if args.refresh:
         build_index(args)
@@ -242,7 +272,15 @@ def clip_text(text: str, width: int = 88) -> str:
     return textwrap.shorten(collapsed, width=width, placeholder="…") if collapsed else ""
 
 
-def filter_captures(captures: list[dict], *, layer: str | None, tag: str | None, text_query: str | None) -> list[dict]:
+def filter_captures(
+    captures: list[dict],
+    *,
+    layer: str | None,
+    tag: str | None,
+    text_query: str | None,
+    state: str | None,
+    review_states: dict[int, str],
+) -> list[dict]:
     matches = captures
 
     if layer:
@@ -260,12 +298,23 @@ def filter_captures(captures: list[dict], *, layer: str | None, tag: str | None,
             if needle in entry.get("text", "").lower() or needle in " ".join(entry.get("tags", [])).lower()
         ]
 
+    if state:
+        matches = [entry for entry in matches if get_review_state(review_states, entry["id"]) == state]
+
     return matches
 
 
 def review(args):
     captures = load_captures()
-    matches = filter_captures(captures, layer=args.layer, tag=args.tag, text_query=args.text)
+    review_states = load_review_states()
+    matches = filter_captures(
+        captures,
+        layer=args.layer,
+        tag=args.tag,
+        text_query=args.text,
+        state=args.state,
+        review_states=review_states,
+    )
     if args.recent:
         matches = matches[-args.recent :]
     if args.limit:
@@ -279,6 +328,8 @@ def review(args):
         active_filters.append(f"tag={args.tag}")
     if args.text:
         active_filters.append(f"text={args.text}")
+    if args.state:
+        active_filters.append(f"state={args.state}")
     if args.recent:
         active_filters.append(f"recent={args.recent}")
     if args.limit:
@@ -286,10 +337,16 @@ def review(args):
     if active_filters:
         print(f"Filters: {', '.join(active_filters)}")
 
+    state_counts = Counter(get_review_state(review_states, entry["id"]) for entry in matches)
+    if matches:
+        summary = ", ".join(f"{state}={state_counts[state]}" for state in REVIEW_STATES if state_counts[state])
+        if summary:
+            print(f"States: {summary}")
+
     for entry in matches:
         base = (
             f"[{entry['id']:>3}] {format_timestamp(entry['timestamp'])} | "
-            f"{entry['layer']} | tags: {format_tags(entry['tags'])}"
+            f"{entry['layer']} | state: {get_review_state(review_states, entry['id'])} | tags: {format_tags(entry['tags'])}"
         )
         print(base)
         print(f"      {clip_text(entry['text'])}")
@@ -305,6 +362,7 @@ def review(args):
 
 def review_show(args):
     captures = load_captures()
+    review_states = load_review_states()
     matches = [entry for entry in captures if entry["id"] == args.id]
     if not matches:
         raise SystemExit(f"Capture id {args.id} not found")
@@ -313,6 +371,7 @@ def review_show(args):
     print(f"id: {entry['id']}")
     print(f"timestamp: {entry['timestamp']}")
     print(f"layer: {entry['layer']}")
+    print(f"state: {get_review_state(review_states, entry['id'])}")
     print(f"source: {entry.get('source', '-')}")
     print(f"tags: {format_tags(entry['tags'])}")
     print("text:")
@@ -322,6 +381,18 @@ def review_show(args):
         suggestion = classify_text(entry.get("text", ""))
         print("suggest:")
         print(json.dumps(suggestion, indent=2))
+
+
+def review_mark(args):
+    captures = load_captures()
+    if not any(entry["id"] == args.id for entry in captures):
+        raise SystemExit(f"Capture id {args.id} not found")
+
+    review_states = load_review_states()
+    review_states[args.id] = args.state
+    save_review_states(review_states)
+    print(f"Marked capture {args.id} as {args.state}")
+    print(REVIEW_STATE_FILE)
 
 
 def query(args):
@@ -422,6 +493,7 @@ def build_parser():
     rp.add_argument("--layer", choices=sorted(VALID_LAYERS))
     rp.add_argument("--tag")
     rp.add_argument("--text")
+    rp.add_argument("--state", choices=REVIEW_STATES)
     rp.add_argument("--limit", type=int, default=20)
     rp.add_argument("--recent", type=int)
     rp.add_argument("--with-suggest", action="store_true")
@@ -431,6 +503,11 @@ def build_parser():
     rs.add_argument("id", type=int)
     rs.add_argument("--with-suggest", action="store_true")
     rs.set_defaults(func=review_show)
+
+    rm = sub.add_parser("review-mark", help="Mark one captured note with a review state.")
+    rm.add_argument("id", type=int)
+    rm.add_argument("--state", required=True, choices=REVIEW_STATES)
+    rm.set_defaults(func=review_mark)
 
     ip = sub.add_parser("index")
     ip.add_argument("--blog-repo", default="../../sera-oc-blog")

@@ -20,8 +20,11 @@ Workbench is meant to sit between rough notes and public outputs. It helps colle
 python3 projects/workbench/workbench.py capture --text "Need to write about archive structure" --layer internal
 python3 projects/workbench/workbench.py review
 python3 projects/workbench/workbench.py review --layer internal --tag flow
-python3 projects/workbench/workbench.py review --text continuity --recent 10 --with-suggest
+python3 projects/workbench/workbench.py review --state new --recent 10 --with-suggest
+python3 projects/workbench/workbench.py review --text continuity --state promote
 python3 projects/workbench/workbench.py review-show 2 --with-suggest
+python3 projects/workbench/workbench.py review-mark 2 --state reviewed
+python3 projects/workbench/workbench.py review-mark 7 --state promote
 python3 projects/workbench/workbench.py index --blog-repo ../sera-oc-blog --foundry-repo .
 python3 projects/workbench/workbench.py status --blog-repo ../sera-oc-blog --foundry-repo .
 python3 projects/workbench/workbench.py suggest --text "Built a validator for blog frontmatter and integrated it into the workflow"
@@ -33,16 +36,31 @@ python3 projects/workbench/workbench.py promote --text "Built a small CLI for sc
 
 Captured notes live in `projects/workbench/data/captures.jsonl`.
 
-Use `review` to inspect them in a compact terminal format with stable line-based IDs.
+Review state lives separately in `projects/workbench/data/review-state.json`, keyed by capture id. Missing state is treated as `new`, so Workbench can stay stateful without rewriting capture history.
+
+Use `review` to inspect notes in a compact terminal format with stable line-based IDs and lightweight triage state.
 
 - `--layer internal|draft|public` filters by continuity layer
 - `--tag TAG` filters by exact tag match
 - `--text QUERY` does a simple case-insensitive substring match against note text and tags
+- `--state new|reviewed|promote|defer|dormant` filters by review state
 - `--recent N` keeps the latest `N` matching notes before display
 - `--limit N` caps displayed results (default: `20`)
 - `--with-suggest` adds the current Workbench suggestion beside each result
 
+`review` now shows each capture's current state and prints a small count summary for the displayed result set.
+
 Use `review-show ID` when you want the full text and metadata for one captured note.
+
+Use `review-mark ID --state ...` to triage a note without editing the note itself.
+
+Available review states:
+
+- `new`
+- `reviewed`
+- `promote`
+- `defer`
+- `dormant`
 
 ## Layers
 
