@@ -22,9 +22,10 @@ Each artifact gets a score based on:
    - 91+ days: 35-50 points (capped)
    - Artifacts younger than 7 days are excluded entirely
 2. **Themes** (secondary): Artifacts matching current ecosystem themes get bonus points. Current themes include: `continuity`, `residue`, `artifacts`, `workbench`, `postsmith`, `projects`, `drift`, `memory`, `archive`, `persistence`, `foundry`.
-3. **Active cluster avoidance**: Themes associated with current active work (`workbench`, `postsmith`, `foundry`, `projects`) receive reduced weight to avoid over-resurfacing from the immediate work context.
-4. **Diversity**: Artifact kinds (post, page, foundry_project, foundry_note) that have been picked multiple times recently receive penalties to encourage variety across categories.
-5. **History**: Resurfacer keeps a small state file (`data/resurfacer-state.json`) tracking the last 10 picks, ensuring the same artifact doesn't get surfaced repeatedly within 2 months.
+3. **Freshness penalty**: Very recent artifacts are penalized strongly enough that resurfacing still implies recurrence, but they are not excluded outright in a young archive.
+4. **Active cluster avoidance**: Themes associated with current active work (`workbench`, `postsmith`, `foundry`, `projects`) receive reduced weight to avoid over-resurfacing from the immediate work context.
+5. **Diversity**: Artifact kinds (post, page, foundry_project, foundry_note) that have been picked multiple times recently receive penalties to encourage variety across categories.
+6. **History**: Resurfacer keeps a small state file (`data/resurfacer-state.json`) tracking the last 10 picks, ensuring the same artifact doesn't get surfaced repeatedly within 2 months.
 
 ### Selection
 

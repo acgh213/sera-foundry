@@ -53,8 +53,8 @@ ACTIVE_CLUSTER_THEMES = {
 ARTIFACT_KINDS = {"post", "page", "foundry_project", "foundry_note"}
 EXCLUDE_KINDS = set()  # empty for now; could exclude likes if needed
 
-# Minimum age threshold for resurfacing (days)
-MIN_AGE_DAYS = 7
+# Preferred minimum age for resurfacing (days)
+PREFERRED_MIN_AGE_DAYS = 7
 
 
 @dataclass
@@ -198,16 +198,12 @@ def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, 
     artifact_date = get_artifact_date(artifact, blog_repo, foundry_repo)
     age_days = calculate_days_since(artifact_date)
     
-    # Minimum age threshold: hard filter
-    if age_days < MIN_AGE_DAYS:
-        return None
-    
-    # Base score: prefer older artifacts with score banding
-    # Band 1: 7-30 days = 10-20 points
-    # Band 2: 31-90 days = 20-35 points
-    # Band 3: 91+ days = 35-50 points
-    if age_days < 30:
-        age_score = 10 + (age_days - MIN_AGE_DAYS) * 0.4
+    # Base score: prefer older artifacts with score banding, but do not starve a young archive.
+    # Very recent artifacts are penalized rather than excluded.
+    if age_days < PREFERRED_MIN_AGE_DAYS:
+        age_score = max(1.0, age_days * 0.8)
+    elif age_days < 30:
+        age_score = 10 + (age_days - PREFERRED_MIN_AGE_DAYS) * 0.4
     elif age_days < 90:
         age_score = 20 + (age_days - 30) * 0.25
     else:
@@ -216,7 +212,11 @@ def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, 
     # Theme score: bonus for matching current themes
     theme_matches = extract_themes_from_artifact(artifact)
     theme_score = len(theme_matches) * 3
-    
+
+    # Freshness penalty: recent artifacts can still surface, but need stronger justification.
+    if age_days < PREFERRED_MIN_AGE_DAYS:
+        theme_score *= 0.5
+
     # Active cluster penalty: reduce score if heavily weighted toward active work themes
     active_theme_count = len([t for t in theme_matches if t in ACTIVE_CLUSTER_THEMES])
     if active_theme_count > 0:
@@ -234,25 +234,25 @@ def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, 
     # Heavy penalty if this kind was picked multiple times recently
     if kind in kind_counts:
         if kind_counts[kind] >= 3:
-            kind_penalty = 15  # Heavy penalty for kinds picked 3+ times
+            kind_penalty = 6   # noticeable, not catastrophic, in a small archive
         elif kind_counts[kind] >= 2:
-            kind_penalty = 8   # Medium penalty for kinds picked 2 times
+            kind_penalty = 3
         else:
-            kind_penalty = 3   # Light penalty for kinds picked once
+            kind_penalty = 1
     
     # History penalty: if we've picked this exact artifact recently, penalize heavily
     artifact_penalty = 0
     for pick in recent_picks[-10:]:
         if pick.get("path") == path:
             days_since_pick = (now - datetime.fromisoformat(pick.get("picked_at", "2000-01-01"))).days
-            if days_since_pick < 14:  # Within 2 weeks
-                artifact_penalty = 100
+            if days_since_pick < 14:
+                artifact_penalty = 12
                 break
-            elif days_since_pick < 30:  # Within a month
-                artifact_penalty = 50
+            elif days_since_pick < 30:
+                artifact_penalty = 6
                 break
-            elif days_since_pick < 60:  # Within 2 months
-                artifact_penalty = 20
+            elif days_since_pick < 60:
+                artifact_penalty = 3
                 break
     
     final_score = age_score + theme_score - kind_penalty - artifact_penalty
@@ -263,8 +263,10 @@ def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, 
         reasons.append(f"old artifact ({age_days} days)")
     elif age_days >= 30:
         reasons.append(f"aging artifact ({age_days} days)")
+    elif age_days >= PREFERRED_MIN_AGE_DAYS:
+        reasons.append(f"mature enough to resurface ({age_days} days)")
     else:
-        reasons.append(f"passed minimum age ({age_days} days)")
+        reasons.append(f"recent artifact with sufficient thematic pull ({age_days} days)")
     
     if theme_matches:
         non_active = [t for t in theme_matches if t not in ACTIVE_CLUSTER_THEMES]
@@ -306,9 +308,9 @@ def run(args):
     candidates = []
     for artifact in index.get("artifacts", []):
         scored = score_artifact(artifact, state, now, blog_repo, foundry_repo, args)
-        if scored and scored.score > 0:
+        if scored:
             candidates.append(scored)
-    
+
     if not candidates:
         print("No eligible artifacts to surface.")
         return
