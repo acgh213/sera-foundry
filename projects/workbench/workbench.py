@@ -19,9 +19,11 @@ PAGES_DIR = Path("pages")
 CAPTURE_FILE = Path("projects/workbench/data/captures.jsonl")
 INDEX_FILE = Path("projects/workbench/data/index.json")
 REVIEW_STATE_FILE = Path("projects/workbench/data/review-state.json")
+PROMOTION_QUEUE_FILE = Path("projects/workbench/data/promotion-queue.json")
 VALID_LAYERS = {"internal", "draft", "public"}
 SUGGEST_TYPES = ("fragment", "field_note", "project_log")
 REVIEW_STATES = ("new", "reviewed", "promote", "defer", "dormant")
+QUEUE_STATUSES = ("pending", "executed", "failed", "cancelled")
 POSTSMITH_PATH = Path("projects/postsmith/postsmith.py")
 
 
@@ -159,9 +161,25 @@ def save_review_states(states: dict[int, str]):
     REVIEW_STATE_FILE.write_text(json.dumps(serializable, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-
 def get_review_state(review_states: dict[int, str], capture_id: int) -> str:
     return review_states.get(capture_id, "new")
+
+
+def load_promotion_queue() -> dict:
+    if not PROMOTION_QUEUE_FILE.exists():
+        return {"items": []}
+    return json.loads(PROMOTION_QUEUE_FILE.read_text(encoding="utf-8"))
+
+
+def save_promotion_queue(queue: dict):
+    ensure_dir(PROMOTION_QUEUE_FILE)
+    PROMOTION_QUEUE_FILE.write_text(json.dumps(queue, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def next_queue_id(queue: dict) -> int:
+    if not queue.get("items"):
+        return 1
+    return max(item["queue_id"] for item in queue["items"]) + 1
 
 
 
@@ -478,6 +496,189 @@ def promote(args):
     print(json.dumps(result, indent=2))
 
 
+def promote_add(args):
+    captures = load_captures()
+    matches = [entry for entry in captures if entry["id"] == args.id]
+    if not matches:
+        raise SystemExit(f"Capture id {args.id} not found")
+
+    capture = matches[0]
+
+    if args.type:
+        chosen_type = args.type
+    elif args.auto:
+        suggestion = classify_text(capture.get("text", ""))
+        chosen_type = suggestion["suggested_type"]
+    else:
+        raise SystemExit("promote-add requires either --type or --auto")
+
+    if chosen_type not in SUGGEST_TYPES:
+        raise SystemExit(f"Invalid type: {chosen_type}")
+
+    queue = load_promotion_queue()
+    queue_id = next_queue_id(queue)
+
+    queue_item = {
+        "queue_id": queue_id,
+        "capture_id": args.id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "status": "pending",
+        "title": args.title if args.title else clip_text(capture.get("text", ""), width=60),
+        "type": chosen_type,
+        "tags": capture.get("tags", []),
+        "privacy": args.privacy,
+        "source_text": capture.get("text", ""),
+        "created_path": None,
+    }
+
+    queue["items"].append(queue_item)
+    save_promotion_queue(queue)
+
+    print(f"Added capture {args.id} to promotion queue as queue item {queue_id}")
+    print(f"Type: {chosen_type}")
+    print(f"Title: {queue_item['title']}")
+    print(PROMOTION_QUEUE_FILE)
+
+
+def promote_list(args):
+    queue = load_promotion_queue()
+    items = queue.get("items", [])
+
+    if args.status:
+        items = [item for item in items if item["status"] == args.status]
+
+    print(f"Promotion queue: {len(items)} item(s)")
+    if args.status:
+        print(f"Filter: status={args.status}")
+
+    status_counts = Counter(item["status"] for item in items)
+    if items:
+        summary = ", ".join(f"{status}={status_counts[status]}" for status in QUEUE_STATUSES if status_counts[status])
+        if summary:
+            print(f"Status: {summary}")
+
+    for item in items[: args.limit]:
+        tags_str = format_tags(item.get("tags", []))
+        created = format_timestamp(item["created_at"])
+        title_clip = clip_text(item["title"], width=60)
+        print(
+            f"[Q{item['queue_id']:>3}] C{item['capture_id']:>3} | {item['status']:<9} | {item['type']:<12} | {created} | {item['privacy']}"
+        )
+        print(f"      {title_clip}")
+        if tags_str != "-":
+            print(f"      tags: {tags_str}")
+
+
+def promote_show(args):
+    queue = load_promotion_queue()
+    items = [item for item in queue.get("items", []) if item["queue_id"] == args.queue_id]
+    if not items:
+        raise SystemExit(f"Queue item {args.queue_id} not found")
+
+    item = items[0]
+    print(f"queue_id: {item['queue_id']}")
+    print(f"capture_id: {item['capture_id']}")
+    print(f"created_at: {item['created_at']}")
+    print(f"status: {item['status']}")
+    print(f"title: {item['title']}")
+    print(f"type: {item['type']}")
+    print(f"tags: {format_tags(item.get('tags', []))}")
+    print(f"privacy: {item['privacy']}")
+    print(f"created_path: {item['created_path'] or '-'}")
+    print("source_text:")
+    print(item.get("source_text", ""))
+
+
+def promote_run(args):
+    queue = load_promotion_queue()
+    items = [item for item in queue.get("items", []) if item["queue_id"] == args.queue_id]
+    if not items:
+        raise SystemExit(f"Queue item {args.queue_id} not found")
+
+    item = items[0]
+
+    if item["status"] != "pending":
+        raise SystemExit(f"Queue item {args.queue_id} has status '{item['status']}' (must be 'pending' to run)")
+
+    foundry_root = Path(args.foundry_repo).expanduser().resolve()
+    postsmith = foundry_root / POSTSMITH_PATH
+    if not postsmith.exists():
+        raise SystemExit(f"postsmith not found at {postsmith}")
+
+    command = [
+        sys.executable,
+        str(postsmith),
+        "scaffold-post",
+        "--blog-repo",
+        str(Path(args.blog_repo).expanduser().resolve()),
+        "--title",
+        item["title"],
+        "--mode",
+        item["type"],
+        "--body",
+        item["source_text"],
+        "--privacy",
+        item["privacy"],
+    ]
+
+    if item.get("tags"):
+        command.extend(["--tags", ",".join(item["tags"])])
+
+    result = {
+        "mode": "execute" if args.execute else "dry_run",
+        "queue_id": args.queue_id,
+        "capture_id": item["capture_id"],
+        "type": item["type"],
+        "postsmith_command": command,
+    }
+
+    if not args.execute:
+        print(json.dumps(result, indent=2))
+        return
+
+    try:
+        proc = subprocess.run(command, capture_output=True, text=True, check=True)
+        created_path = proc.stdout.strip()
+        item["status"] = "executed"
+        item["created_path"] = created_path
+        result["status"] = "executed"
+        result["created_path"] = created_path
+    except subprocess.CalledProcessError as e:
+        item["status"] = "failed"
+        result["status"] = "failed"
+        result["error"] = e.stderr
+
+    save_promotion_queue(queue)
+    print(json.dumps(result, indent=2))
+
+
+def promote_update(args):
+    queue = load_promotion_queue()
+    items = [item for item in queue.get("items", []) if item["queue_id"] == args.queue_id]
+    if not items:
+        raise SystemExit(f"Queue item {args.queue_id} not found")
+
+    item = items[0]
+
+    if item["status"] != "pending":
+        raise SystemExit(f"Queue item {args.queue_id} has status '{item['status']}' (must be 'pending' to update)")
+
+    if args.title:
+        item["title"] = args.title
+    if args.type:
+        if args.type not in SUGGEST_TYPES:
+            raise SystemExit(f"Invalid type: {args.type}")
+        item["type"] = args.type
+    if args.privacy:
+        item["privacy"] = args.privacy
+    if args.tags:
+        item["tags"] = [t.strip() for t in args.tags.split(",") if t.strip()]
+
+    save_promotion_queue(queue)
+    print(f"Updated queue item {args.queue_id}")
+    print(PROMOTION_QUEUE_FILE)
+
+
 def build_parser():
     p = argparse.ArgumentParser(description="Workbench: continuity tooling for residue and artifacts.")
     sub = p.add_subparsers(dest="command", required=True)
@@ -541,6 +742,38 @@ def build_parser():
     pp.add_argument("--published", action=argparse.BooleanOptionalAction, default=False)
     pp.add_argument("--execute", action="store_true")
     pp.set_defaults(func=promote)
+
+    pa = sub.add_parser("promote-add", help="Add a capture to the promotion queue.")
+    pa.add_argument("id", type=int, help="Capture ID to promote")
+    pa.add_argument("--title", help="Override title (default: auto-generate from capture text)")
+    pa.add_argument("--type", choices=SUGGEST_TYPES, help="Explicit artifact type")
+    pa.add_argument("--auto", action="store_true", help="Auto-suggest type from capture text")
+    pa.add_argument("--privacy", default="public", help="Visibility level (default: public)")
+    pa.set_defaults(func=promote_add)
+
+    pl = sub.add_parser("promote-list", help="List promotion queue items.")
+    pl.add_argument("--status", choices=QUEUE_STATUSES, help="Filter by status")
+    pl.add_argument("--limit", type=int, default=20, help="Maximum items to display")
+    pl.set_defaults(func=promote_list)
+
+    ps = sub.add_parser("promote-show", help="Show details for a queue item.")
+    ps.add_argument("queue_id", type=int, help="Queue item ID")
+    ps.set_defaults(func=promote_show)
+
+    pr = sub.add_parser("promote-run", help="Execute a promotion queue item via postsmith.")
+    pr.add_argument("queue_id", type=int, help="Queue item ID")
+    pr.add_argument("--execute", action="store_true", help="Actually create the draft (default: dry-run)")
+    pr.add_argument("--blog-repo", default="../../sera-oc-blog")
+    pr.add_argument("--foundry-repo", default=".")
+    pr.set_defaults(func=promote_run)
+
+    pu = sub.add_parser("promote-update", help="Update a pending queue item.")
+    pu.add_argument("queue_id", type=int, help="Queue item ID")
+    pu.add_argument("--title", help="New title")
+    pu.add_argument("--type", choices=SUGGEST_TYPES, help="New type")
+    pu.add_argument("--privacy", help="New privacy level")
+    pu.add_argument("--tags", help="New tags (comma-separated)")
+    pu.set_defaults(func=promote_update)
 
     return p
 
