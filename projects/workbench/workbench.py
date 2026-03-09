@@ -5,6 +5,7 @@ import argparse
 import json
 import subprocess
 import sys
+import textwrap
 from collections import Counter
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
@@ -114,6 +115,26 @@ def load_index() -> dict:
     return json.loads(INDEX_FILE.read_text(encoding="utf-8"))
 
 
+def load_captures() -> list[dict]:
+    if not CAPTURE_FILE.exists():
+        return []
+
+    captures = []
+    with CAPTURE_FILE.open("r", encoding="utf-8") as f:
+        for idx, raw_line in enumerate(f, start=1):
+            line = raw_line.strip()
+            if not line:
+                continue
+            entry = json.loads(line)
+            entry["id"] = idx
+            entry["layer"] = entry.get("layer", "internal")
+            entry["tags"] = entry.get("tags") or []
+            entry["text"] = entry.get("text", "")
+            entry["timestamp"] = entry.get("timestamp", "-")
+            captures.append(entry)
+    return captures
+
+
 def status(args):
     if args.refresh:
         build_index(args)
@@ -200,6 +221,107 @@ def classify_text(text: str):
 
 def suggest(args):
     print(json.dumps(classify_text(args.text), indent=2))
+
+
+def format_tags(tags: list[str]) -> str:
+    return ", ".join(tags) if tags else "-"
+
+
+def format_timestamp(timestamp: str) -> str:
+    if not timestamp or timestamp == "-":
+        return "-"
+    try:
+        dt = datetime.fromisoformat(timestamp)
+        return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    except ValueError:
+        return timestamp
+
+
+def clip_text(text: str, width: int = 88) -> str:
+    collapsed = " ".join(text.split())
+    return textwrap.shorten(collapsed, width=width, placeholder="…") if collapsed else ""
+
+
+def filter_captures(captures: list[dict], *, layer: str | None, tag: str | None, text_query: str | None) -> list[dict]:
+    matches = captures
+
+    if layer:
+        matches = [entry for entry in matches if entry.get("layer") == layer]
+
+    if tag:
+        tag_lower = tag.lower()
+        matches = [entry for entry in matches if any(t.lower() == tag_lower for t in entry.get("tags", []))]
+
+    if text_query:
+        needle = text_query.lower()
+        matches = [
+            entry
+            for entry in matches
+            if needle in entry.get("text", "").lower() or needle in " ".join(entry.get("tags", [])).lower()
+        ]
+
+    return matches
+
+
+def review(args):
+    captures = load_captures()
+    matches = filter_captures(captures, layer=args.layer, tag=args.tag, text_query=args.text)
+    if args.recent:
+        matches = matches[-args.recent :]
+    if args.limit:
+        matches = matches[: args.limit]
+
+    print(f"Review captures: {len(matches)} match(es)")
+    active_filters = []
+    if args.layer:
+        active_filters.append(f"layer={args.layer}")
+    if args.tag:
+        active_filters.append(f"tag={args.tag}")
+    if args.text:
+        active_filters.append(f"text={args.text}")
+    if args.recent:
+        active_filters.append(f"recent={args.recent}")
+    if args.limit:
+        active_filters.append(f"limit={args.limit}")
+    if active_filters:
+        print(f"Filters: {', '.join(active_filters)}")
+
+    for entry in matches:
+        base = (
+            f"[{entry['id']:>3}] {format_timestamp(entry['timestamp'])} | "
+            f"{entry['layer']} | tags: {format_tags(entry['tags'])}"
+        )
+        print(base)
+        print(f"      {clip_text(entry['text'])}")
+        if args.with_suggest:
+            suggestion = classify_text(entry.get("text", ""))
+            print(
+                "      suggest: "
+                f"{suggestion['suggested_type']}"
+                f" ({suggestion['confidence']})"
+                f"; secondary={suggestion['secondary_type']}"
+            )
+
+
+def review_show(args):
+    captures = load_captures()
+    matches = [entry for entry in captures if entry["id"] == args.id]
+    if not matches:
+        raise SystemExit(f"Capture id {args.id} not found")
+
+    entry = matches[0]
+    print(f"id: {entry['id']}")
+    print(f"timestamp: {entry['timestamp']}")
+    print(f"layer: {entry['layer']}")
+    print(f"source: {entry.get('source', '-')}")
+    print(f"tags: {format_tags(entry['tags'])}")
+    print("text:")
+    print(entry.get("text", ""))
+
+    if args.with_suggest:
+        suggestion = classify_text(entry.get("text", ""))
+        print("suggest:")
+        print(json.dumps(suggestion, indent=2))
 
 
 def query(args):
@@ -295,6 +417,20 @@ def build_parser():
     cp.add_argument("--tags", default="")
     cp.add_argument("--layer", default="internal")
     cp.set_defaults(func=capture)
+
+    rp = sub.add_parser("review", help="Review captured notes.")
+    rp.add_argument("--layer", choices=sorted(VALID_LAYERS))
+    rp.add_argument("--tag")
+    rp.add_argument("--text")
+    rp.add_argument("--limit", type=int, default=20)
+    rp.add_argument("--recent", type=int)
+    rp.add_argument("--with-suggest", action="store_true")
+    rp.set_defaults(func=review)
+
+    rs = sub.add_parser("review-show", help="Show one captured note in detail.")
+    rs.add_argument("id", type=int)
+    rs.add_argument("--with-suggest", action="store_true")
+    rs.set_defaults(func=review_show)
 
     ip = sub.add_parser("index")
     ip.add_argument("--blog-repo", default="../../sera-oc-blog")
