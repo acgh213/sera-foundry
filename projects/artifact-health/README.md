@@ -2,17 +2,17 @@
 
 A diagnostic CLI that analyzes the structural health of the Sera Foundry artifact ecosystem.
 
-Reveals weaknesses in archive organization and metadata, identifies isolated artifacts, and reports on connectivity patterns in the broader system.
+Reveals weaknesses in archive organization and metadata, identifies isolated artifacts, and reports on connectivity patterns in the broader system. Distinguishes between structural conventions and real issues to provide clear, actionable diagnostics.
 
 ## What It Does
 
 `artifact-health` reads the workbench index and reports on:
 
-- **Untagged artifacts** — Items with no tags or empty tag lists; indicate items not yet connected to the ecosystem
-- **Weakly connected artifacts** — Items with only one tag; may indicate incomplete categorization
-- **Bridge artifacts** — Items with multiple high-frequency tags; these connect disparate sections of the archive
-- **Metadata gaps** — Artifacts with missing or null critical fields (title, path, kind, tags)
-- **Staleness signals** — Unpublished drafts and artifacts with ambiguous publication state
+- **Untagged content** — Posts/essays without tags; indicates disconnection from ecosystem. Pages and foundry items excluded (conventionally untagged)
+- **Weakly connected content** — Posts/essays with only one tag; may indicate incomplete categorization. Pages and foundry items excluded
+- **Bridge artifacts** — Content with 3+ high-frequency tags; these connect disparate sections of the archive and indicate core ecosystem connectors
+- **Metadata gaps** — Artifacts with missing or null critical fields. Foundry items excluded (null tags by design)
+- **Content state** — Publication status of posts and pages; unpublished drafts tracked separately
 - **Tag ecosystem** — Frequency distribution of tags and average connectivity
 
 ## Usage
@@ -37,79 +37,66 @@ A human-readable diagnostic with box-drawing characters and structured sections:
 
 ```
 ╭─ ARTIFACT HEALTH REPORT
-│ Generated: 2026-03-09 01:51 UTC
+│ Generated: 2026-03-09 12:32 UTC
 │ Total artifacts indexed: 22
+
+╭─ UNTAGGED CONTENT (posts, etc.)
+│ Count: 0
+│ ✓ All content artifacts are tagged
+
+╭─ WEAKLY CONNECTED CONTENT (single tag)
+│ Count: 0
+│ ✓ All content artifacts have multi-tag connection
+
+╭─ BRIDGE ARTIFACTS (ecosystem connectors)
+│ Count: 3 (3+ tags, high-frequency)
+│ Insight: These artifacts connect disparate sections of the archive
 │
-╭─ UNTAGGED ARTIFACTS
-│ Count: 2
-│
-│ • About Sera [page]
-│   tags: -
-│   path: pages/about.md
-│
-│ • Colophon [page]
-│   tags: -
-│   path: pages/colophon.md
-│
-│ ... and 0 more
-│
-╭─ WEAKLY CONNECTED ARTIFACTS
-│ Count: 8 (1 or fewer tags)
-│
-│ • Drift [page]
-│   tags: -
-│   path: pages/drift.md
-│
-│ • Library [page]
-│   tags: -
-│   path: pages/library.md
-│
-│ ... and 6 more
-│
-╭─ BRIDGE ARTIFACTS
-│ Count: 1 (multiple tags, high-frequency)
-│
-│ • State of Workbench, State of the System [post]
-│   tags: workbench, systems, continuity, foundry
-│   path: blog/drafts/2026-03-09-state-of-workbench-state-of-the-system.md
-│
+│ • About Sera [post]
+│   tags: about, identity, archive
+│   path: blog/drafts/2026-03-08-about-sera.md
+│ • First Residue [post]
+│   tags: fragment, residue, archive
+│   path: blog/drafts/2026-03-08-first-residue.md
+│ • Project Log: postsmith [post]
+│   tags: projects, foundry, tooling
+│   path: blog/drafts/2026-03-08-postsmith-project-log.md
+
 ╭─ METADATA GAPS
-│ Count: 7 artifact(s) with missing/null fields
-│
-│ • postsmith
-│   issues: null tags
-│ • resurfacer
-│   issues: null tags
-│ • workbench
-│   issues: null tags
-│
-│ ... and 4 more
-│
-╭─ STALENESS SIGNALS
-│ Total unpublished drafts: 2
-│ Stale candidates (null published): 0
+│ Count: 0 artifact(s) with missing/null fields
+│ ✓ All artifacts have complete core metadata
+
+╭─ CONTENT STATE
+│ Published content: 10/13
+│ Unpublished drafts: 3
+│ Stale candidates (null state): 0
 │
 │ Unpublished drafts:
-│ • About Sera
-│ • Project Log: Workbench Promotion Bridge
-│
+│ • About Sera [post]
+│ • Project Log: Workbench Promotion Bridge [post]
+│ • Projects [page]
+
 ╭─ TAG ECOSYSTEM
-│ Unique tags: 13
-│ Average tags per artifact: 1.45
+│ Unique tags: 18
+│ Average tags per artifact: 1.05
 │
 │ Top tags by frequency:
-│ • archive: 3
-│ • workbench: 3
-│ • projects: 2
+│ • archive: 2
+│ • foundry: 2
 │ • collaboration: 2
+│ • workbench: 2
 │ • continuity: 2
-│ • fragment: 1
-│ • residue: 1
-│ • identity: 1
-│ ... (8 more tags with count 1)
+│ ... (13 more tags with count 1)
+
+╭─ OVERALL ASSESSMENT
+│ ✓ HEALTHY
+│ • All content is tagged and connected
+│ • No critical metadata gaps
+│ • Archive ecosystem is well-formed
+│ • 10/13 content published
 │
-╭─ OVERALL HEALTH
-│ ⚠ AREAS TO ADDRESS: 2 untagged, metadata gaps
+│ Note: foundry_project and foundry_note (structural artifacts)
+│       are excluded from tagging and publication assessments.
 ╰─
 ```
 
@@ -159,22 +146,39 @@ Structured data for downstream processing:
 ## How It Works
 
 1. **Load Index** — Reads `projects/workbench/data/index.json` (built by workbench CLI)
-2. **Analyze** — Computes metrics across multiple dimensions:
-   - Tag frequency and distribution
-   - Connectivity patterns (bridge detection)
+2. **Classify Artifacts** — Distinguishes artifact types:
+   - **Structural**: foundry_project, foundry_note (not subject to content tagging rules)
+   - **Conventional**: pages (conventionally untagged by design)
+   - **Content**: posts, essays, notes (should be tagged and connected)
+3. **Analyze** — Computes metrics across multiple dimensions:
+   - Tag frequency and distribution (for content artifacts only)
+   - Connectivity patterns (bridge detection for content)
    - Metadata completeness
    - Publication state
-3. **Report** — Outputs findings in readable format with actionable insights
+4. **Report** — Outputs findings in readable format with actionable insights
+
+### Untagged/Weakly Connected Detection
+
+Focuses exclusively on **content artifacts** (posts, essays, etc.):
+
+- **Untagged**: Content with 0 tags → disconnected from ecosystem
+- **Weakly connected**: Content with exactly 1 tag → incomplete categorization
+
+Excludes:
+- Foundry items (have null tags by convention)
+- Pages (have empty tags by convention)
+
+This prevents false positives and noise from structural artifacts.
 
 ### Bridge Detection Algorithm
 
-Bridge artifacts are identified as items that:
+Bridge artifacts are identified as content items that:
 
-1. Have 2+ tags
+1. Have 3+ tags (meaningful multi-dimensional connection)
 2. All tags are in the top 70% of frequencies
-3. This indicates high connection to well-established parts of the archive
+3. This indicates high connection to established ecosystem sections
 
-This helps identify artifacts that hold the ecosystem together and connect otherwise disparate sections.
+These artifacts are valuable connectors and indicate strong ecosystem integration.
 
 ### Metadata Gap Detection
 
@@ -183,28 +187,30 @@ Checks for:
 - Missing or empty title
 - Missing or empty path  
 - Null kind field
-- Null tags (as opposed to empty list)
-- Missing mode (for non-foundry items)
+- Null tags (for non-foundry items; foundry items excluded)
+- Missing mode (for content items; structural items excluded)
 
-Foundry projects and notes are treated specially since they don't have mode/published fields.
+Foundry items are exempt from tag and mode checks (by design).
 
-### Staleness Inference
+### Content State Assessment
 
-Current signals:
+Tracks publication status of content (posts and pages):
 
-- **Explicit drafts**: `published=False` (clear signal)
-- **Null publication state**: `published=null` (ambiguous; may indicate incomplete processing)
-- **Foundry items**: Not considered stale (structural artifacts)
-
-Future enhancements could integrate timestamp data from the workbench captures layer.
+- Published vs. unpublished counts
+- Identifies unpublished drafts
+- Flags high unpublished ratios (>33%) in overall health
 
 ## Design Notes
 
-- **Text-first**: Primary output is human-readable terminal output
+- **Text-first**: Primary output is human-readable terminal output with clear section labels
 - **Bounded scope**: Diagnostic tool, not analytics engine
+- **Convention-aware**: Distinguishes intentional patterns (foundry items, pages) from real issues
+- **Low noise**: Reduces false positives by excluding structural/conventional artifacts from tagging assessments
+- **Actionable signals**: Improvements focus on content connectivity, not on items that are untagged by design
 - **Grounded in real state**: All metrics derived from actual artifact data
 - **No fake data**: No embeddings, telemetry, or synthetic signals
 - **Composable**: JSON output supports downstream tooling
+- **Inspectable**: Simple heuristics (tag counts, publication state) remain visible and understandable
 
 ## See Also
 

@@ -50,11 +50,36 @@ def classify_artifact(artifact: dict) -> str:
     return kind
 
 
+def is_structural_artifact(artifact: dict) -> bool:
+    """Check if artifact is structural (foundry items) and not subject to tagging."""
+    kind = artifact.get("kind", "")
+    return kind in ["foundry_project", "foundry_note"]
+
+
+def is_conventional_untagged(artifact: dict) -> bool:
+    """Check if artifact type conventionally has no tags (e.g., pages)."""
+    kind = artifact.get("kind", "")
+    # Pages often don't have tags by design - they're structural like foundry items
+    return kind == "page"
+
+
 def analyze_untagged(artifacts: list[dict]) -> tuple[list[dict], int]:
-    """Find artifacts with no tags or empty tag lists."""
+    """Find content artifacts (posts, etc.) with no tags.
+    
+    Excludes:
+    - Foundry items (structural, null tags by convention)
+    - Pages (conventionally untagged)
+    """
     untagged = []
     count = 0
     for artifact in artifacts:
+        # Skip structural artifacts
+        if is_structural_artifact(artifact):
+            continue
+        # Skip conventionally untagged types
+        if is_conventional_untagged(artifact):
+            continue
+        
         tags = artifact.get("tags")
         # null, None, [], or missing = untagged
         if not tags:
@@ -74,9 +99,23 @@ def analyze_tag_distribution(artifacts: list[dict]) -> dict[str, int]:
 
 
 def analyze_weak_connections(artifacts: list[dict], threshold: int = 1) -> list[dict]:
-    """Find artifacts with very few tags (indicating weak connection to ecosystem)."""
+    """Find content artifacts with very few tags (weak ecosystem connection).
+    
+    Excludes:
+    - Foundry items (structural, not part of tagging ecosystem)
+    - Pages (conventionally untagged)
+    
+    Focuses on posts and content that should have multi-tag connectivity.
+    """
     weak = []
     for artifact in artifacts:
+        # Skip structural artifacts
+        if is_structural_artifact(artifact):
+            continue
+        # Skip conventionally untagged types
+        if is_conventional_untagged(artifact):
+            continue
+        
         tags = artifact.get("tags") or []
         if isinstance(tags, list) and len(tags) <= threshold:
             weak.append(artifact)
@@ -86,11 +125,13 @@ def analyze_weak_connections(artifacts: list[dict], threshold: int = 1) -> list[
 def analyze_bridge_artifacts(artifacts: list[dict], tag_freq: dict[str, int], threshold_pct: float = 70.0) -> list[dict]:
     """
     Find 'bridge' artifacts that:
-    - Have multiple tags
+    - Have 3+ tags (real multi-dimensional connection)
     - Connect disparate parts of the archive via shared tagging
     
-    A bridge artifact is one whose tags are individually common (top tier),
-    connecting otherwise isolated groups.
+    A bridge artifact is one whose tags are individually established (top tier),
+    connecting otherwise disparate groups. These are valuable ecosystem connectors.
+    
+    Excludes foundry items and pages (structural, not ecosystem bridges).
     """
     if not tag_freq:
         return []
@@ -103,19 +144,29 @@ def analyze_bridge_artifacts(artifacts: list[dict], tag_freq: dict[str, int], th
     
     bridges = []
     for artifact in artifacts:
+        # Skip structural artifacts
+        if is_structural_artifact(artifact):
+            continue
+        if is_conventional_untagged(artifact):
+            continue
+        
         tags = artifact.get("tags") or []
         if isinstance(tags, list):
-            # Must have 2+ tags, all from top tier
-            if len(tags) >= 2 and all(t in top_tags for t in tags):
+            # Raise threshold to 3+ tags to find real bridges
+            if len(tags) >= 3 and all(t in top_tags for t in tags):
                 bridges.append(artifact)
     
     return bridges
 
 
 def analyze_metadata_gaps(artifacts: list[dict]) -> list[dict]:
-    """Find artifacts with missing or null critical metadata."""
+    """Find artifacts with missing or null critical metadata.
+    
+    Excludes foundry items from tagging checks (null tags by convention).
+    """
     gaps = []
     for artifact in artifacts:
+        kind = artifact.get("kind", "")
         issues = []
         
         # Check for null/missing fields
@@ -125,12 +176,14 @@ def analyze_metadata_gaps(artifacts: list[dict]) -> list[dict]:
             issues.append("missing path")
         if artifact.get("kind") is None:
             issues.append("null kind")
-        if artifact.get("tags") is None:
-            issues.append("null tags")
         
-        # Special checks for foundry items (expect no mode/published)
-        kind = artifact.get("kind", "")
-        if kind not in ["foundry_project", "foundry_note"]:
+        # Only check tags for non-foundry items (foundry items have null by convention)
+        if not is_structural_artifact(artifact):
+            if artifact.get("tags") is None:
+                issues.append("null tags (should be list or empty)")
+        
+        # Check mode only for content artifacts
+        if kind not in ["foundry_project", "foundry_note", "page"]:
             if not artifact.get("mode"):
                 issues.append("missing mode")
         
@@ -204,9 +257,10 @@ def report_text(artifacts: list[dict]) -> str:
     stale_cand, unpublished = infer_staleness(artifacts)
     
     # Untagged section
-    lines.append("╭─ UNTAGGED ARTIFACTS")
+    lines.append("╭─ UNTAGGED CONTENT (posts, etc.)")
     lines.append(f"│ Count: {untagged_count}")
     if untagged_count > 0:
+        lines.append("│ Issue: Content without tags is disconnected from the ecosystem")
         lines.append("│")
         for artifact in untagged[:10]:  # Show first 10
             formatted = format_artifact_line(artifact, "│ ")
@@ -214,13 +268,14 @@ def report_text(artifacts: list[dict]) -> str:
         if untagged_count > 10:
             lines.append(f"│ ... and {untagged_count - 10} more")
     else:
-        lines.append("│ ✓ All artifacts are tagged")
+        lines.append("│ ✓ All content artifacts are tagged")
     lines.append("")
     
     # Weakly connected
-    lines.append("╭─ WEAKLY CONNECTED ARTIFACTS")
-    lines.append(f"│ Count: {len(weak)} (1 or fewer tags)")
+    lines.append("╭─ WEAKLY CONNECTED CONTENT (single tag)")
+    lines.append(f"│ Count: {len(weak)}")
     if len(weak) > 0:
+        lines.append("│ Issue: Content with only 1 tag has limited ecosystem connection")
         lines.append("│")
         for artifact in weak[:10]:
             formatted = format_artifact_line(artifact, "│ ")
@@ -228,13 +283,14 @@ def report_text(artifacts: list[dict]) -> str:
         if len(weak) > 10:
             lines.append(f"│ ... and {len(weak) - 10} more")
     else:
-        lines.append("│ ✓ Good connectivity across ecosystem")
+        lines.append("│ ✓ All content artifacts have multi-tag connection")
     lines.append("")
     
     # Bridge artifacts
-    lines.append("╭─ BRIDGE ARTIFACTS")
-    lines.append(f"│ Count: {len(bridges)} (multiple tags, high-frequency)")
+    lines.append("╭─ BRIDGE ARTIFACTS (ecosystem connectors)")
+    lines.append(f"│ Count: {len(bridges)} (3+ tags, high-frequency)")
     if len(bridges) > 0:
+        lines.append("│ Insight: These artifacts connect disparate sections of the archive")
         lines.append("│")
         for artifact in bridges[:5]:
             formatted = format_artifact_line(artifact, "│ ")
@@ -242,7 +298,7 @@ def report_text(artifacts: list[dict]) -> str:
         if len(bridges) > 5:
             lines.append(f"│ ... and {len(bridges) - 5} more")
     else:
-        lines.append("│ (None detected in this archive)")
+        lines.append("│ (None detected—ecosystem may be compartmentalized)")
     lines.append("")
     
     # Metadata gaps
@@ -254,8 +310,9 @@ def report_text(artifacts: list[dict]) -> str:
             artifact = item["artifact"]
             issues = item["issues"]
             title = artifact.get("title", "?")
+            kind = artifact.get("kind", "?")
             issue_str = ", ".join(issues)
-            lines.append(f"│ • {title}")
+            lines.append(f"│ • {title} [{kind}]")
             lines.append(f"│   issues: {issue_str}")
         if len(gaps) > 10:
             lines.append(f"│ ... and {len(gaps) - 10} more")
@@ -264,15 +321,22 @@ def report_text(artifacts: list[dict]) -> str:
     lines.append("")
     
     # Staleness signals
-    lines.append("╭─ STALENESS SIGNALS")
+    lines.append("╭─ CONTENT STATE")
+    # Count publishable content (posts, pages; exclude foundry items)
+    publishable = [a for a in artifacts if a.get("kind") in ["post", "page"]]
+    published_count = sum(1 for a in publishable if a.get("published") is True)
+    
+    lines.append(f"│ Published content: {published_count}/{len(publishable)}")
     lines.append(f"│ Unpublished drafts: {len(unpublished)}")
-    lines.append(f"│ Stale candidates (null published): {len(stale_cand)}")
+    lines.append(f"│ Stale candidates (null state): {len(stale_cand)}")
+    
     if unpublished:
         lines.append("│")
         lines.append("│ Unpublished drafts:")
         for artifact in unpublished[:5]:
             title = artifact.get("title", "?")
-            lines.append(f"│ • {title}")
+            kind = artifact.get("kind", "?")
+            lines.append(f"│ • {title} [{kind}]")
         if len(unpublished) > 5:
             lines.append(f"│ ... and {len(unpublished) - 5} more")
     lines.append("")
@@ -290,20 +354,44 @@ def report_text(artifacts: list[dict]) -> str:
     lines.append("")
     
     # Overall health
-    lines.append("╭─ OVERALL HEALTH")
+    lines.append("╭─ OVERALL ASSESSMENT")
+    content_artifacts = [a for a in artifacts if not is_structural_artifact(a) and not is_conventional_untagged(a)]
+    publishable = [a for a in artifacts if a.get("kind") in ["post", "page"]]
+    published_count = sum(1 for a in publishable if a.get("published") is True)
+    
     health_issues = []
-    if untagged_count > 0:
-        health_issues.append(f"{untagged_count} untagged")
-    if len(weak) > len(artifacts) * 0.2:
-        health_issues.append("many weakly-connected")
+    
+    # Structural issues (tagging, connectivity)
+    if untagged_count > 0 and content_artifacts:
+        pct = (untagged_count / len(content_artifacts)) * 100
+        health_issues.append(f"{untagged_count} untagged content items ({pct:.0f}%)")
+    if len(weak) > 0 and content_artifacts:
+        pct = (len(weak) / len(content_artifacts)) * 100
+        health_issues.append(f"{len(weak)} single-tag items ({pct:.0f}%)")
     if len(gaps) > 0:
-        health_issues.append("metadata gaps")
+        health_issues.append(f"metadata gaps in {len(gaps)} artifact(s)")
+    
+    # Content state issues
+    if publishable and len(unpublished) > 0:
+        pct = (len(unpublished) / len(publishable)) * 100
+        if pct > 33:  # More than 1/3 unpublished
+            health_issues.append(f"high unpublished ratio: {len(unpublished)}/{len(publishable)} ({pct:.0f}%)")
     
     if not health_issues:
-        lines.append("│ ✓ HEALTHY - No major structural issues detected")
+        lines.append("│ ✓ HEALTHY")
+        lines.append("│ • All content is tagged and connected")
+        lines.append("│ • No critical metadata gaps")
+        lines.append("│ • Archive ecosystem is well-formed")
+        if publishable:
+            lines.append(f"│ • {published_count}/{len(publishable)} content published")
     else:
-        lines.append(f"│ ⚠ AREAS TO ADDRESS: {', '.join(health_issues)}")
+        lines.append("│ ⚠ ATTENTION NEEDED")
+        for issue in health_issues:
+            lines.append(f"│ • {issue}")
     
+    lines.append("│")
+    lines.append("│ Note: foundry_project and foundry_note (structural artifacts)")
+    lines.append("│       are excluded from tagging and publication assessments.")
     lines.append("╰─")
     
     return "\n".join(lines)

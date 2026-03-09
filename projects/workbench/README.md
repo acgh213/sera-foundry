@@ -42,10 +42,12 @@ python3 projects/workbench/workbench.py promote --text "Built a small CLI for sc
 
 # Promotion queue (recommended)
 python3 projects/workbench/workbench.py promote-add 2 --auto
-python3 projects/workbench/workbench.py promote-list
+python3 projects/workbench/workbench.py promote-list              # pending items only
+python3 projects/workbench/workbench.py promote-list --all        # all statuses
 python3 projects/workbench/workbench.py promote-show 1
 python3 projects/workbench/workbench.py promote-run 1 --execute --blog-repo ../sera-oc-blog
 python3 projects/workbench/workbench.py promote-update 1 --title "New Title"
+python3 projects/workbench/workbench.py promote-cancel 1
 ```
 
 ## Review flow
@@ -125,11 +127,15 @@ python3 projects/workbench/workbench.py promote-add 2 --auto
 # Add with explicit type and title
 python3 projects/workbench/workbench.py promote-add 5 --type field_note --title "Field Note: Archive Structure"
 
-# List all queue items
+# List queue items (shows pending by default)
 python3 projects/workbench/workbench.py promote-list
 
-# Filter by status
-python3 projects/workbench/workbench.py promote-list --status pending
+# List all items regardless of status
+python3 projects/workbench/workbench.py promote-list --all
+
+# Filter by specific status
+python3 projects/workbench/workbench.py promote-list --status executed
+python3 projects/workbench/workbench.py promote-list --status failed
 
 # Show details for a queue item
 python3 projects/workbench/workbench.py promote-show 1
@@ -142,16 +148,33 @@ python3 projects/workbench/workbench.py promote-run 1 --execute --blog-repo ../s
 
 # Update a pending queue item
 python3 projects/workbench/workbench.py promote-update 1 --title "New Title" --type project_log
+
+# Cancel a pending queue item
+python3 projects/workbench/workbench.py promote-cancel 1
 ```
 
 ### Queue item lifecycle
 
+Items move through these states:
+
 1. **pending** - newly added, ready to be executed
 2. **executed** - successfully created a draft in the blog repo
 3. **failed** - execution failed (check error in queue state file)
-4. **cancelled** - manually marked as cancelled (update status directly in JSON)
+4. **cancelled** - manually cancelled via `promote-cancel`
 
-Queue items can only be updated while in `pending` state. Once executed or failed, they become immutable records of the promotion attempt.
+**Rules:**
+- Only `pending` items can be updated or cancelled
+- Once executed, failed, or cancelled, items become immutable records
+- `promote-list` shows only `pending` items by default (use `--all` to see everything)
+- Failed and cancelled items remain visible in the queue for debugging and history
+- To hide completed/failed items from the default view, they must stay in non-pending status
+
+**Queue hygiene:**
+- Use `promote-list` (default) to see active work
+- Use `promote-list --all` to review history and diagnose failures
+- Use `promote-list --status failed` to focus on errors
+- Use `promote-cancel` to mark items you no longer want to execute
+- The queue retains history by design - completed items don't clutter the default view
 
 ### Design notes
 

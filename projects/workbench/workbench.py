@@ -544,18 +544,34 @@ def promote_list(args):
     queue = load_promotion_queue()
     items = queue.get("items", [])
 
-    if args.status:
-        items = [item for item in items if item["status"] == args.status]
+    # Default to pending items unless --all or explicit --status is given
+    if not args.all and not args.status:
+        items = [item for item in items if item["status"] == "pending"]
+        default_filter = True
+    else:
+        default_filter = False
+        if args.status:
+            items = [item for item in items if item["status"] == args.status]
 
     print(f"Promotion queue: {len(items)} item(s)")
-    if args.status:
-        print(f"Filter: status={args.status}")
+    
+    filters = []
+    if default_filter:
+        filters.append("status=pending (default)")
+    elif args.status:
+        filters.append(f"status={args.status}")
+    if args.all:
+        filters.append("all statuses")
+    if filters:
+        print(f"Filter: {', '.join(filters)}")
 
-    status_counts = Counter(item["status"] for item in items)
-    if items:
+    # Show status counts for all items (not just filtered)
+    all_items = queue.get("items", [])
+    status_counts = Counter(item["status"] for item in all_items)
+    if all_items:
         summary = ", ".join(f"{status}={status_counts[status]}" for status in QUEUE_STATUSES if status_counts[status])
         if summary:
-            print(f"Status: {summary}")
+            print(f"All statuses: {summary}")
 
     for item in items[: args.limit]:
         tags_str = format_tags(item.get("tags", []))
@@ -679,6 +695,23 @@ def promote_update(args):
     print(PROMOTION_QUEUE_FILE)
 
 
+def promote_cancel(args):
+    queue = load_promotion_queue()
+    items = [item for item in queue.get("items", []) if item["queue_id"] == args.queue_id]
+    if not items:
+        raise SystemExit(f"Queue item {args.queue_id} not found")
+
+    item = items[0]
+
+    if item["status"] != "pending":
+        raise SystemExit(f"Queue item {args.queue_id} has status '{item['status']}' (must be 'pending' to cancel)")
+
+    item["status"] = "cancelled"
+    save_promotion_queue(queue)
+    print(f"Cancelled queue item {args.queue_id}")
+    print(PROMOTION_QUEUE_FILE)
+
+
 def build_parser():
     p = argparse.ArgumentParser(description="Workbench: continuity tooling for residue and artifacts.")
     sub = p.add_subparsers(dest="command", required=True)
@@ -753,6 +786,7 @@ def build_parser():
 
     pl = sub.add_parser("promote-list", help="List promotion queue items.")
     pl.add_argument("--status", choices=QUEUE_STATUSES, help="Filter by status")
+    pl.add_argument("--all", action="store_true", help="Show all statuses (default: pending only)")
     pl.add_argument("--limit", type=int, default=20, help="Maximum items to display")
     pl.set_defaults(func=promote_list)
 
@@ -774,6 +808,10 @@ def build_parser():
     pu.add_argument("--privacy", help="New privacy level")
     pu.add_argument("--tags", help="New tags (comma-separated)")
     pu.set_defaults(func=promote_update)
+
+    pc = sub.add_parser("promote-cancel", help="Cancel a pending queue item.")
+    pc.add_argument("queue_id", type=int, help="Queue item ID to cancel")
+    pc.set_defaults(func=promote_cancel)
 
     return p
 
