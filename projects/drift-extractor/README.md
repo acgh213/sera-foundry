@@ -74,19 +74,22 @@ python3 projects/workbench/workbench.py promote --type fragment --execute
 DRIFT CANDIDATES: 2026-03-09-the-pressure-of-artifacts.md
 ============================================================
 
-[1] TENSION/CONTRAST LANGUAGE
-    Score: 0.60
+[1] STRUCTURAL TENSION
+    Signal: tension/contrast language
+    Score: 0.92
 
     A response solves the moment and then drifts backward into chat
     history.
 
-[2] UNCERTAINTY/HEDGING
-    Score: 0.60
+[2] BOUNDARY TENSION
+    Signal: uncertainty/hedging
+    Score: 0.81
 
     I do not mean that in the sense of fake humanity.
 
-[3] EXPLICIT QUESTION
-    Score: 0.70
+[3] OPEN QUESTION
+    Signal: explicit question
+    Score: 0.88
 
     What has been happening here is not just prompting?
 
@@ -103,14 +106,16 @@ DRIFT CANDIDATES: 2026-03-09-the-pressure-of-artifacts.md
     {
       "text": "A response solves the moment and then drifts backward into chat history.",
       "reason": "tension/contrast language",
+      "pressure": "structural tension",
       "context": null,
-      "score": 0.6
+      "score": 0.92
     },
     {
       "text": "I do not mean that in the sense of fake humanity.",
       "reason": "uncertainty/hedging",
+      "pressure": "boundary tension",
       "context": null,
-      "score": 0.6
+      "score": 0.81
     }
   ],
   "count": 2
@@ -119,15 +124,17 @@ DRIFT CANDIDATES: 2026-03-09-the-pressure-of-artifacts.md
 
 ## Heuristics
 
-Drift-extractor uses simple, inspectable pattern matching:
+Drift-extractor uses simple, inspectable pattern matching plus light structure recovery:
 
 ### Explicit Questions
-- Sentences containing `?`
+- Sentences or grouped question blocks containing `?`
 - Longer questions (>20 chars) preferred
+- Multi-question sets are kept together when they clearly belong to one pressure
 - "What if" / "Why not" style questions score higher
 
 ### Tension/Contrast
 - Words like: but, yet, however, although, instead, rather, nevertheless
+- Block-aware extraction tries to preserve the surrounding sentence pair or list intro
 - Signals unresolved contrasts or competing ideas
 
 ### Uncertainty/Hedging
@@ -147,15 +154,21 @@ Drift-extractor uses simple, inspectable pattern matching:
 - Sentences ending with ellipses (`...`)
 - Often marks unfinished or exploratory ideas
 
+### Pressure Labels
+- Candidates are also tagged with a sharper pressure label (`missing bridge`, `selection pressure`, `boundary tension`, etc.)
+- The original extraction signal is still shown so the heuristic remains inspectable
+
 ## Scoring
 
-Each candidate gets a base score depending on extraction type:
+Each candidate gets a base score depending on extraction type, then receives boosts/penalties for substantiveness and prose integrity.
 
-- Open sections: **0.8**
-- Explicit questions (exploratory): **0.7**
-- Tensions/contrasts: **0.6**
-- Uncertainty markers: **0.5** (+ 0.1 per additional marker)
-- Trailing thoughts: **0.6**
+- Open sections: **0.82**
+- Explicit questions (exploratory): **0.62–0.72**
+- Tensions/contrasts: **0.66**
+- Uncertainty markers: **0.56** (+ per additional marker)
+- Trailing thoughts: **0.64**
+
+Additional heuristics reward intact prose, domain specificity, and well-formed question blocks, while penalizing compressed list artifacts and weak structural scraps.
 
 The top 3 highest-scoring candidates are returned.
 
