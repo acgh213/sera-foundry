@@ -139,7 +139,11 @@ def load_captures() -> list[dict]:
     return captures
 
 
-def load_review_states() -> dict[int, str]:
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def load_review_states() -> dict[int, dict[str, str | None]]:
     if not REVIEW_STATE_FILE.exists():
         return {}
 
@@ -150,25 +154,54 @@ def load_review_states() -> dict[int, str]:
             capture_id = int(key)
         except (TypeError, ValueError):
             continue
-        if value in REVIEW_STATES:
-            states[capture_id] = value
+
+        state = None
+        updated_at = None
+        if isinstance(value, str):
+            state = value
+        elif isinstance(value, dict):
+            state = value.get("state")
+            updated_at = value.get("updated_at")
+
+        if state in REVIEW_STATES:
+            states[capture_id] = {
+                "state": state,
+                "updated_at": updated_at,
+            }
     return states
 
 
-def save_review_states(states: dict[int, str]):
+def save_review_states(states: dict[int, dict[str, str | None]]):
     ensure_dir(REVIEW_STATE_FILE)
-    serializable = {str(capture_id): state for capture_id, state in sorted(states.items())}
+    serializable = {
+        str(capture_id): {"state": record["state"], "updated_at": record.get("updated_at")}
+        for capture_id, record in sorted(states.items())
+    }
     REVIEW_STATE_FILE.write_text(json.dumps(serializable, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def get_review_state(review_states: dict[int, str], capture_id: int) -> str:
-    return review_states.get(capture_id, "new")
+def get_review_state(review_states: dict[int, dict[str, str | None]], capture_id: int) -> str:
+    record = review_states.get(capture_id)
+    if not record:
+        return "new"
+    return record.get("state") or "new"
+
+
+def get_review_updated_at(review_states: dict[int, dict[str, str | None]], capture_id: int) -> str | None:
+    record = review_states.get(capture_id)
+    if not record:
+        return None
+    return record.get("updated_at")
 
 
 def load_promotion_queue() -> dict:
     if not PROMOTION_QUEUE_FILE.exists():
         return {"items": []}
-    return json.loads(PROMOTION_QUEUE_FILE.read_text(encoding="utf-8"))
+
+    queue = json.loads(PROMOTION_QUEUE_FILE.read_text(encoding="utf-8"))
+    for item in queue.get("items", []):
+        item.setdefault("updated_at", item.get("created_at"))
+    return queue
 
 
 def save_promotion_queue(queue: dict):
@@ -275,14 +308,20 @@ def format_tags(tags: list[str]) -> str:
     return ", ".join(tags) if tags else "-"
 
 
-def format_timestamp(timestamp: str) -> str:
+def parse_timestamp(timestamp: str | None) -> datetime | None:
     if not timestamp or timestamp == "-":
-        return "-"
+        return None
     try:
-        dt = datetime.fromisoformat(timestamp)
-        return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        return datetime.fromisoformat(timestamp).astimezone(timezone.utc)
     except ValueError:
-        return timestamp
+        return None
+
+
+def format_timestamp(timestamp: str) -> str:
+    dt = parse_timestamp(timestamp)
+    if dt is None:
+        return timestamp or "-"
+    return dt.strftime("%Y-%m-%d %H:%M UTC")
 
 
 def clip_text(text: str, width: int = 88) -> str:
@@ -297,7 +336,7 @@ def filter_captures(
     tag: str | None,
     text_query: str | None,
     state: str | None,
-    review_states: dict[int, str],
+    review_states: dict[int, dict[str, str | None]],
 ) -> list[dict]:
     matches = captures
 
@@ -320,6 +359,131 @@ def filter_captures(
         matches = [entry for entry in matches if get_review_state(review_states, entry["id"]) == state]
 
     return matches
+
+
+def sort_captures_by_timestamp(entries: list[dict]) -> list[dict]:
+    return sorted(
+        entries,
+        key=lambda entry: (parse_timestamp(entry.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc), entry["id"]),
+        reverse=True,
+    )
+
+
+def print_digest_section(title: str, entries: list[dict], review_states: dict[int, dict[str, str | None]], limit: int):
+    print(title)
+    if not entries:
+        print("  (none)")
+        return
+
+    for entry in sort_captures_by_timestamp(entries)[:limit]:
+        state = get_review_state(review_states, entry["id"])
+        print(
+            f"  [{entry['id']:>3}] {format_timestamp(entry['timestamp'])} | "
+            f"{entry['layer']} | {state} | tags: {format_tags(entry['tags'])}"
+        )
+        print(f"        {clip_text(entry['text'], width=72)}")
+
+
+def build_recent_activity(
+    captures: list[dict],
+    review_states: dict[int, dict[str, str | None]],
+    queue: dict,
+) -> list[tuple[datetime, str]]:
+    events: list[tuple[datetime, str]] = []
+
+    for entry in captures:
+        dt = parse_timestamp(entry.get("timestamp"))
+        if dt is None:
+            continue
+        events.append(
+            (
+                dt,
+                f"capture C{entry['id']} ({entry['layer']}) | {clip_text(entry['text'], width=68)}",
+            )
+        )
+
+    capture_lookup = {entry["id"]: entry for entry in captures}
+    for capture_id, record in review_states.items():
+        dt = parse_timestamp(record.get("updated_at"))
+        if dt is None:
+            continue
+        state = record.get("state") or "new"
+        entry = capture_lookup.get(capture_id)
+        detail = clip_text(entry.get("text", ""), width=52) if entry else ""
+        line = f"review C{capture_id} -> {state}"
+        if detail:
+            line += f" | {detail}"
+        events.append((dt, line))
+
+    for item in queue.get("items", []):
+        dt = parse_timestamp(item.get("updated_at") or item.get("created_at"))
+        if dt is None:
+            continue
+        line = f"queue Q{item['queue_id']} {item['status']} from C{item['capture_id']} | {clip_text(item['title'], width=52)}"
+        events.append((dt, line))
+
+    return sorted(events, key=lambda event: event[0], reverse=True)
+
+
+def digest(args):
+    captures = load_captures()
+    review_states = load_review_states()
+    queue = load_promotion_queue()
+
+    counts = Counter(get_review_state(review_states, entry["id"]) for entry in captures)
+    queue_counts = Counter(item.get("status", "unknown") for item in queue.get("items", []))
+
+    new_entries = [entry for entry in captures if get_review_state(review_states, entry["id"]) == "new"]
+    promote_entries = [entry for entry in captures if get_review_state(review_states, entry["id"]) == "promote"]
+    defer_entries = [entry for entry in captures if get_review_state(review_states, entry["id"]) == "defer"]
+    dormant_entries = [entry for entry in captures if get_review_state(review_states, entry["id"]) == "dormant"]
+
+    print("Review digest")
+    print(
+        "- captures: "
+        + ", ".join(
+            [f"total={len(captures)}"]
+            + [f"{state}={counts[state]}" for state in REVIEW_STATES if counts[state]]
+        )
+    )
+    if queue.get("items"):
+        print(
+            "- promotion queue: "
+            + ", ".join(f"{status}={queue_counts[status]}" for status in QUEUE_STATUSES if queue_counts[status])
+        )
+
+    print_digest_section("New", new_entries, review_states, args.limit)
+    print_digest_section("Marked promote", promote_entries, review_states, args.limit)
+    print_digest_section("Deferred", defer_entries, review_states, args.limit)
+    print_digest_section("Dormant", dormant_entries, review_states, args.limit)
+
+    activity = build_recent_activity(captures, review_states, queue)[: args.recent]
+    print("Recent movement")
+    if not activity:
+        print("  (none)")
+    else:
+        for dt, line in activity:
+            print(f"  - {dt.strftime('%Y-%m-%d %H:%M UTC')} | {line}")
+
+    suggestions = []
+    if new_entries:
+        newest_new = sort_captures_by_timestamp(new_entries)[: min(args.limit, 3)]
+        suggestions.append(
+            "review new captures: " + ", ".join(f"C{entry['id']}" for entry in newest_new)
+        )
+    if promote_entries:
+        suggestions.append("queue promote-marked captures: " + ", ".join(f"C{entry['id']}" for entry in promote_entries[:3]))
+    failed_queue = [item for item in queue.get("items", []) if item.get("status") == "failed"]
+    if failed_queue:
+        suggestions.append("inspect failed queue items: " + ", ".join(f"Q{item['queue_id']}" for item in failed_queue[:3]))
+    pending_queue = [item for item in queue.get("items", []) if item.get("status") == "pending"]
+    if pending_queue:
+        suggestions.append("run pending queue items: " + ", ".join(f"Q{item['queue_id']}" for item in pending_queue[:3]))
+
+    if suggestions:
+        print("Next actions")
+        for line in suggestions:
+            print(f"  - {line}")
 
 
 def review(args):
@@ -407,7 +571,10 @@ def review_mark(args):
         raise SystemExit(f"Capture id {args.id} not found")
 
     review_states = load_review_states()
-    review_states[args.id] = args.state
+    review_states[args.id] = {
+        "state": args.state,
+        "updated_at": now_iso(),
+    }
     save_review_states(review_states)
     print(f"Marked capture {args.id} as {args.state}")
     print(REVIEW_STATE_FILE)
@@ -521,7 +688,8 @@ def promote_add(args):
     queue_item = {
         "queue_id": queue_id,
         "capture_id": args.id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
         "status": "pending",
         "title": args.title if args.title else clip_text(capture.get("text", ""), width=60),
         "type": chosen_type,
@@ -656,11 +824,13 @@ def promote_run(args):
         proc = subprocess.run(command, capture_output=True, text=True, check=True)
         created_path = proc.stdout.strip()
         item["status"] = "executed"
+        item["updated_at"] = now_iso()
         item["created_path"] = created_path
         result["status"] = "executed"
         result["created_path"] = created_path
     except subprocess.CalledProcessError as e:
         item["status"] = "failed"
+        item["updated_at"] = now_iso()
         result["status"] = "failed"
         result["error"] = e.stderr
 
@@ -689,6 +859,7 @@ def promote_update(args):
         item["privacy"] = args.privacy
     if args.tags:
         item["tags"] = [t.strip() for t in args.tags.split(",") if t.strip()]
+    item["updated_at"] = now_iso()
 
     save_promotion_queue(queue)
     print(f"Updated queue item {args.queue_id}")
@@ -707,6 +878,7 @@ def promote_cancel(args):
         raise SystemExit(f"Queue item {args.queue_id} has status '{item['status']}' (must be 'pending' to cancel)")
 
     item["status"] = "cancelled"
+    item["updated_at"] = now_iso()
     save_promotion_queue(queue)
     print(f"Cancelled queue item {args.queue_id}")
     print(PROMOTION_QUEUE_FILE)
@@ -742,6 +914,11 @@ def build_parser():
     rm.add_argument("id", type=int)
     rm.add_argument("--state", required=True, choices=REVIEW_STATES)
     rm.set_defaults(func=review_mark)
+
+    dg = sub.add_parser("digest", help="Print a compact review-state digest.")
+    dg.add_argument("--limit", type=int, default=3, help="Maximum entries per section")
+    dg.add_argument("--recent", type=int, default=6, help="Maximum recent activity lines")
+    dg.set_defaults(func=digest)
 
     ip = sub.add_parser("index")
     ip.add_argument("--blog-repo", default="../../sera-oc-blog")

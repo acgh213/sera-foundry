@@ -28,6 +28,8 @@ python3 projects/workbench/workbench.py review --text continuity --state promote
 python3 projects/workbench/workbench.py review-show 2 --with-suggest
 python3 projects/workbench/workbench.py review-mark 2 --state reviewed
 python3 projects/workbench/workbench.py review-mark 7 --state promote
+python3 projects/workbench/workbench.py digest
+python3 projects/workbench/workbench.py digest --limit 5 --recent 8
 
 # Index & status
 python3 projects/workbench/workbench.py index --blog-repo ../sera-oc-blog --foundry-repo .
@@ -71,6 +73,8 @@ Use `review` to inspect notes in a compact terminal format with stable line-base
 Use `review-show ID` when you want the full text and metadata for one captured note.
 
 Use `review-mark ID --state ...` to triage a note without editing the note itself.
+
+Use `digest` when you want the smallest operational summary of review reality: what is still new, what has been marked for promotion, what is deferred or dormant, and what recently moved in review/promotion state. The digest is terminal-first and only reflects local capture, review, and promotion queue files.
 
 Available review states:
 
