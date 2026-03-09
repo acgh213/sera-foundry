@@ -16,10 +16,15 @@ Think of it as a form of **active curation through temporal depth**.
 
 Each artifact gets a score based on:
 
-1. **Age** (primary): Older artifacts score higher. Resurfacer uses dated filenames when available and otherwise falls back to file modification time.
+1. **Age** (primary): Older artifacts score higher via score banding:
+   - 7-30 days: 10-20 points
+   - 31-90 days: 20-35 points
+   - 91+ days: 35-50 points (capped)
+   - Artifacts younger than 7 days are excluded entirely
 2. **Themes** (secondary): Artifacts matching current ecosystem themes get bonus points. Current themes include: `continuity`, `residue`, `artifacts`, `workbench`, `postsmith`, `projects`, `drift`, `memory`, `archive`, `persistence`, `foundry`.
-3. **Recency penalty**: Very new artifacts (< 3 days) are penalized hard enough that resurfacing means recurrence, not just picking the most on-theme thing from yesterday. Recently picked artifacts are also heavily penalized.
-4. **History**: Resurfacer keeps a small state file (`data/resurfacer-state.json`) tracking the last few picks, ensuring the same artifact doesn't get surfaced repeatedly within 2 weeks.
+3. **Active cluster avoidance**: Themes associated with current active work (`workbench`, `postsmith`, `foundry`, `projects`) receive reduced weight to avoid over-resurfacing from the immediate work context.
+4. **Diversity**: Artifact kinds (post, page, foundry_project, foundry_note) that have been picked multiple times recently receive penalties to encourage variety across categories.
+5. **History**: Resurfacer keeps a small state file (`data/resurfacer-state.json`) tracking the last 10 picks, ensuring the same artifact doesn't get surfaced repeatedly within 2 months.
 
 ### Selection
 
@@ -58,6 +63,19 @@ python3 projects/resurfacer/resurfacer.py run --dry-run
 python3 projects/resurfacer/resurfacer.py run \
   --blog-repo /path/to/sera-oc-blog \
   --foundry-repo /path/to/sera-foundry
+```
+
+### With Filters
+
+```bash
+# Only surface blog posts
+python3 projects/resurfacer/resurfacer.py run --kind post
+
+# Only surface artifacts matching a specific theme
+python3 projects/resurfacer/resurfacer.py run --theme memory
+
+# Combine filters
+python3 projects/resurfacer/resurfacer.py run --kind page --theme drift
 ```
 
 ## Output

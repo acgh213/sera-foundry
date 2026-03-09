@@ -40,9 +40,21 @@ CURRENT_THEMES = {
     "foundry",
 }
 
+# Active cluster themes (things you're working on right now)
+# These should be de-prioritized to avoid over-resurfacing current work
+ACTIVE_CLUSTER_THEMES = {
+    "workbench",
+    "postsmith",
+    "foundry",
+    "projects",
+}
+
 # Artifact kinds to consider (exclude certain types)
 ARTIFACT_KINDS = {"post", "page", "foundry_project", "foundry_note"}
 EXCLUDE_KINDS = set()  # empty for now; could exclude likes if needed
+
+# Minimum age threshold for resurfacing (days)
+MIN_AGE_DAYS = 7
 
 
 @dataclass
@@ -161,8 +173,8 @@ def extract_themes_from_artifact(artifact: dict) -> list[str]:
     return list(set(matches))  # Remove duplicates
 
 
-def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, foundry_repo: Path) -> ArtifactScore | None:
-    """Score a single artifact based on age, themes, and history."""
+def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, foundry_repo: Path, args=None) -> ArtifactScore | None:
+    """Score a single artifact based on age, themes, history, and diversity."""
     
     # Skip excluded kinds
     if artifact.get("kind") in EXCLUDE_KINDS:
@@ -172,45 +184,101 @@ def score_artifact(artifact: dict, state: dict, now: datetime, blog_repo: Path, 
     if artifact.get("kind") not in ARTIFACT_KINDS:
         return None
     
+    # Apply optional filters
+    if args:
+        if args.kind and artifact.get("kind") != args.kind:
+            return None
+        if args.theme:
+            theme_matches_all = extract_themes_from_artifact(artifact)
+            if args.theme not in theme_matches_all:
+                return None
+    
     path = artifact.get("path", "")
+    kind = artifact.get("kind", "")
     artifact_date = get_artifact_date(artifact, blog_repo, foundry_repo)
     age_days = calculate_days_since(artifact_date)
     
-    # Base score: prefer older artifacts (log scale to avoid too-old being overwhelming)
-    age_score = min(age_days / 10.0, 50)  # Cap at 50 points
+    # Minimum age threshold: hard filter
+    if age_days < MIN_AGE_DAYS:
+        return None
+    
+    # Base score: prefer older artifacts with score banding
+    # Band 1: 7-30 days = 10-20 points
+    # Band 2: 31-90 days = 20-35 points
+    # Band 3: 91+ days = 35-50 points
+    if age_days < 30:
+        age_score = 10 + (age_days - MIN_AGE_DAYS) * 0.4
+    elif age_days < 90:
+        age_score = 20 + (age_days - 30) * 0.25
+    else:
+        age_score = min(35 + (age_days - 90) * 0.1, 50)
     
     # Theme score: bonus for matching current themes
     theme_matches = extract_themes_from_artifact(artifact)
     theme_score = len(theme_matches) * 3
-
-    # Recency penalty: if it's very recent, penalize hard enough that resurfacing means recurrence
-    if age_days < 3:
-        age_score *= 0.35
-        theme_score *= 0.5
     
-    # History penalty: if we've picked it recently, penalize heavily
+    # Active cluster penalty: reduce score if heavily weighted toward active work themes
+    active_theme_count = len([t for t in theme_matches if t in ACTIVE_CLUSTER_THEMES])
+    if active_theme_count > 0:
+        cluster_penalty = active_theme_count * 5  # 5 points per active cluster theme
+        theme_score = max(0, theme_score - cluster_penalty)
+    
+    # Diversity bonus: prefer kinds not picked recently
     recent_picks = state.get("picks", [])
-    penalty = 0
-    for pick in recent_picks[-5:]:  # Look at last 5 picks
+    kind_penalty = 0
+    kind_counts = defaultdict(int)
+    for pick in recent_picks[-10:]:  # Look at last 10 picks
+        picked_kind = pick.get("kind", "")
+        kind_counts[picked_kind] += 1
+    
+    # Heavy penalty if this kind was picked multiple times recently
+    if kind in kind_counts:
+        if kind_counts[kind] >= 3:
+            kind_penalty = 15  # Heavy penalty for kinds picked 3+ times
+        elif kind_counts[kind] >= 2:
+            kind_penalty = 8   # Medium penalty for kinds picked 2 times
+        else:
+            kind_penalty = 3   # Light penalty for kinds picked once
+    
+    # History penalty: if we've picked this exact artifact recently, penalize heavily
+    artifact_penalty = 0
+    for pick in recent_picks[-10:]:
         if pick.get("path") == path:
             days_since_pick = (now - datetime.fromisoformat(pick.get("picked_at", "2000-01-01"))).days
             if days_since_pick < 14:  # Within 2 weeks
-                penalty = 100
+                artifact_penalty = 100
                 break
-            elif days_since_pick < 30:
-                penalty = 50
+            elif days_since_pick < 30:  # Within a month
+                artifact_penalty = 50
+                break
+            elif days_since_pick < 60:  # Within 2 months
+                artifact_penalty = 20
                 break
     
-    final_score = age_score + theme_score - penalty
+    final_score = age_score + theme_score - kind_penalty - artifact_penalty
     
+    # Build reasons list
     reasons = []
-    if age_days >= 7:
-        reasons.append(f"older artifact ({age_days} days)")
-    elif age_days >= 3:
-        reasons.append(f"not recent ({age_days} days)")
+    if age_days >= 90:
+        reasons.append(f"old artifact ({age_days} days)")
+    elif age_days >= 30:
+        reasons.append(f"aging artifact ({age_days} days)")
+    else:
+        reasons.append(f"passed minimum age ({age_days} days)")
+    
     if theme_matches:
-        reasons.append(f"matches themes: {', '.join(theme_matches)}")
-    if penalty == 0 and recent_picks:
+        non_active = [t for t in theme_matches if t not in ACTIVE_CLUSTER_THEMES]
+        if non_active:
+            reasons.append(f"matches non-active themes: {', '.join(non_active)}")
+        if active_theme_count > 0:
+            reasons.append(f"reduced weight for active cluster themes")
+    
+    if kind_penalty == 0:
+        reasons.append(f"kind '{kind}' not over-represented recently")
+    elif kind_penalty > 0:
+        reasons.append(f"kind '{kind}' picked recently (diversity penalty applied)")
+    
+    if artifact_penalty == 0:
         reasons.append("not picked recently")
     
     return ArtifactScore(
@@ -237,7 +305,7 @@ def run(args):
     # Score all artifacts
     candidates = []
     for artifact in index.get("artifacts", []):
-        scored = score_artifact(artifact, state, now, blog_repo, foundry_repo)
+        scored = score_artifact(artifact, state, now, blog_repo, foundry_repo, args)
         if scored and scored.score > 0:
             candidates.append(scored)
     
@@ -278,6 +346,7 @@ def run(args):
         state["picks"].append({
             "path": artifact.get("path"),
             "title": artifact.get("title"),
+            "kind": artifact.get("kind", "unknown"),
             "picked_at": now.isoformat(),
             "score": pick.score,
         })
@@ -345,6 +414,8 @@ def build_parser():
     rp.add_argument("--foundry-repo", default=".", help="Path to foundry repo")
     rp.add_argument("--json", action="store_true", help="Output as JSON")
     rp.add_argument("--dry-run", action="store_true", help="Don't update state")
+    rp.add_argument("--kind", choices=list(ARTIFACT_KINDS), help="Filter by artifact kind")
+    rp.add_argument("--theme", help="Filter by theme (must match at least this theme)")
     rp.set_defaults(func=run)
     
     return p
