@@ -9,7 +9,7 @@ Reports on:
 - review-state coverage
 - suspiciously short captures
 - exact normalized duplicate groups
-- a compact worth-inspecting section
+- a compact residue-class surfacing section
 
 The heuristics are intentionally small and inspectable.
 """
@@ -29,6 +29,54 @@ CAPTURE_FILE = Path("projects/workbench/data/captures.jsonl")
 REVIEW_STATE_FILE = Path("projects/workbench/data/review-state.json")
 REVIEW_STATES = {"new", "reviewed", "promote", "defer", "dormant"}
 
+MEANINGFUL_EXTRACTED_PRESSURE = "meaningful extracted pressure"
+WEAK_MEANINGFUL_PLANNING = "weak but meaningful planning residue"
+WEAK_LOW_VALUE = "weak low-value residue"
+OTHER_RESIDUE = "other residue"
+
+PRESSURE_MARKERS = {
+    "but",
+    "still",
+    "because",
+    "whether",
+    "when",
+    "instead",
+    "yet",
+    "however",
+    "coherent",
+    "question",
+}
+PLANNING_MARKERS = {
+    "need",
+    "better",
+    "potential",
+    "public",
+    "internal",
+    "note",
+    "notes",
+    "continuity",
+    "layers",
+    "layer",
+    "promotion",
+    "flow",
+    "distinction",
+    "design",
+    "workflow",
+    "plan",
+    "planning",
+}
+LOW_VALUE_PHRASES = {
+    "thought about",
+    "fragment kept",
+    "kept instead of discarded",
+}
+RESIDUE_PRIORITY = {
+    MEANINGFUL_EXTRACTED_PRESSURE: 0,
+    WEAK_MEANINGFUL_PLANNING: 1,
+    WEAK_LOW_VALUE: 2,
+    OTHER_RESIDUE: 3,
+}
+
 
 @dataclass
 class Capture:
@@ -46,6 +94,7 @@ class Capture:
     length_chars: int
     word_count: int
     extraction_mode: str
+    residue_class: str
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,7 +104,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oldest-limit", type=int, default=5, help="How many oldest unreviewed captures to show")
     parser.add_argument("--short-limit", type=int, default=5, help="How many short captures to show")
     parser.add_argument("--duplicate-limit", type=int, default=5, help="How many duplicate groups to show")
-    parser.add_argument("--inspect-limit", type=int, default=8, help="How many worth-inspecting items to show")
+    parser.add_argument("--inspect-limit", type=int, default=8, help="How many default-surfaced items to show")
     parser.add_argument("--short-chars", type=int, default=45, help="Suspicious-short threshold by non-space character count")
     parser.add_argument("--short-words", type=int, default=7, help="Suspicious-short threshold by word count")
     return parser.parse_args()
@@ -117,6 +166,27 @@ def extraction_mode_for(raw: dict, source_family: str) -> str:
     return "unknown"
 
 
+def classify_residue(text: str, extraction_mode: str, word_count: int) -> str:
+    lowered = text.casefold()
+    tokens = set(re.findall(r"\b\w+\b", lowered))
+    has_pressure_marker = bool(tokens & PRESSURE_MARKERS)
+    has_planning_marker = bool(tokens & PLANNING_MARKERS)
+    has_low_value_phrase = any(phrase in lowered for phrase in LOW_VALUE_PHRASES)
+
+    if extraction_mode == "extracted":
+        if has_low_value_phrase:
+            return WEAK_LOW_VALUE
+        if word_count >= 10 or has_pressure_marker:
+            return MEANINGFUL_EXTRACTED_PRESSURE
+        return WEAK_LOW_VALUE
+
+    if has_low_value_phrase or word_count <= 5:
+        return WEAK_LOW_VALUE
+    if has_planning_marker:
+        return WEAK_MEANINGFUL_PLANNING
+    return OTHER_RESIDUE
+
+
 def read_captures(path: Path, review_states: dict[int, dict[str, str | None]]) -> list[Capture]:
     if not path.exists():
         raise SystemExit(f"Capture file not found: {path}")
@@ -133,6 +203,8 @@ def read_captures(path: Path, review_states: dict[int, dict[str, str | None]]) -
             source = raw.get("source") or "unknown"
             source_family = source_family_for(source)
             review = review_states.get(line_number, {})
+            word_count = len(re.findall(r"\b\w+\b", text))
+            extraction_mode = extraction_mode_for(raw, source_family)
             captures.append(
                 Capture(
                     id=line_number,
@@ -147,8 +219,9 @@ def read_captures(path: Path, review_states: dict[int, dict[str, str | None]]) -
                     review_state=(review.get("state") or "new"),
                     review_updated_at=review.get("updated_at"),
                     length_chars=len(re.sub(r"\s+", "", text)),
-                    word_count=len(re.findall(r"\b\w+\b", text)),
-                    extraction_mode=extraction_mode_for(raw, source_family),
+                    word_count=word_count,
+                    extraction_mode=extraction_mode,
+                    residue_class=classify_residue(text, extraction_mode, word_count),
                 )
             )
     return captures
@@ -207,33 +280,16 @@ def find_duplicate_groups(captures: Iterable[Capture]) -> list[list[Capture]]:
     return groups
 
 
-def build_worth_inspecting(
-    unreviewed: list[Capture],
-    short_items: list[Capture],
-    duplicate_groups: list[list[Capture]],
-) -> list[tuple[Capture, list[str]]]:
-    reasons: dict[int, list[str]] = defaultdict(list)
-    captures_by_id: dict[int, Capture] = {}
-
-    for capture in unreviewed[:5]:
-        reasons[capture.id].append("oldest unreviewed")
-        captures_by_id[capture.id] = capture
-
-    for capture in short_items[:5]:
-        reasons[capture.id].append(f"very short ({capture.word_count}w/{capture.length_chars}c)")
-        captures_by_id[capture.id] = capture
-
-    for group in duplicate_groups[:5]:
-        ids = ", ".join(str(item.id) for item in group)
-        for capture in group:
-            reasons[capture.id].append(f"duplicate group [{ids}]")
-            captures_by_id[capture.id] = capture
-
-    ranked = sorted(
-        captures_by_id.values(),
-        key=lambda item: (-len(reasons[item.id]), item.dt or datetime.max.replace(tzinfo=timezone.utc), item.id),
+def build_default_surfacing(captures: list[Capture]) -> list[Capture]:
+    return sorted(
+        captures,
+        key=lambda item: (
+            RESIDUE_PRIORITY.get(item.residue_class, 99),
+            item.review_state != "new",
+            item.dt or datetime.max.replace(tzinfo=timezone.utc),
+            item.id,
+        ),
     )
-    return [(capture, reasons[capture.id]) for capture in ranked]
 
 
 def report(captures: list[Capture], args: argparse.Namespace) -> str:
@@ -251,6 +307,7 @@ def report(captures: list[Capture], args: argparse.Namespace) -> str:
     source_counts = Counter(c.source for c in captures)
     extraction_counts = Counter(c.extraction_mode for c in captures)
     review_counts = Counter(c.review_state for c in captures)
+    residue_counts = Counter(c.residue_class for c in captures)
 
     lines.append("╭─ SHAPE")
     lines.append("│ By layer:")
@@ -264,6 +321,9 @@ def report(captures: list[Capture], args: argparse.Namespace) -> str:
     lines.append("│")
     lines.append("│ Review states:")
     lines.extend(format_counter(review_counts))
+    lines.append("│")
+    lines.append("│ Residue classes (heuristic):")
+    lines.extend(format_counter(residue_counts))
     if source_counts:
         lines.append("│")
         lines.append("│ Top exact sources:")
@@ -277,7 +337,9 @@ def report(captures: list[Capture], args: argparse.Namespace) -> str:
         lines.append("│ ✓ No unreviewed captures")
     else:
         for capture in unreviewed[: args.oldest_limit]:
-            lines.append(f"│ #{capture.id}  {fmt_dt(capture.dt)}  [{capture.layer}] [{capture.source_family}]")
+            lines.append(
+                f"│ #{capture.id}  {fmt_dt(capture.dt)}  [{capture.layer}] [{capture.source_family}] [{capture.residue_class}]"
+            )
             lines.append(f"│   {preview(capture.text)}")
     lines.append("")
 
@@ -290,7 +352,7 @@ def report(captures: list[Capture], args: argparse.Namespace) -> str:
     else:
         for capture in short_items[: args.short_limit]:
             lines.append(
-                f"│ #{capture.id}  {capture.word_count}w/{capture.length_chars}c  [{capture.review_state}] [{capture.source_family}]"
+                f"│ #{capture.id}  {capture.word_count}w/{capture.length_chars}c  [{capture.review_state}] [{capture.source_family}] [{capture.residue_class}]"
             )
             lines.append(f"│   {preview(capture.text)}")
     lines.append("")
@@ -308,20 +370,36 @@ def report(captures: list[Capture], args: argparse.Namespace) -> str:
             lines.append(f"│   {preview(group[0].text)}")
     lines.append("")
 
-    worth_inspecting = build_worth_inspecting(unreviewed, short_items, duplicate_groups)
-    lines.append("╭─ WORTH INSPECTING")
-    if not worth_inspecting:
+    surfaced = build_default_surfacing(captures)
+    lines.append("╭─ DEFAULT SURFACING")
+    lines.append("│ Order: meaningful extracted pressure → weak planning residue → weak low-value residue")
+    if not surfaced:
         lines.append("│ ✓ Nothing clearly surfaced by current heuristics")
     else:
-        for capture, reasons in worth_inspecting[: args.inspect_limit]:
-            reason_text = "; ".join(reasons)
-            lines.append(f"│ #{capture.id}  [{capture.review_state}] [{capture.layer}] [{capture.source_family}]  {reason_text}")
+        for capture in surfaced[: args.inspect_limit]:
+            deprioritized = " (deprioritized)" if capture.residue_class == WEAK_LOW_VALUE else ""
+            lines.append(
+                f"│ #{capture.id}  [{capture.review_state}] [{capture.layer}] [{capture.source_family}] [{capture.residue_class}]{deprioritized}"
+            )
+            lines.append(f"│   {preview(capture.text)}")
+    lines.append("")
+
+    weak_low_value = [capture for capture in surfaced if capture.residue_class == WEAK_LOW_VALUE]
+    lines.append("╭─ DEPRIORITIZED WEAK LOW-VALUE")
+    lines.append(f"│ Count: {len(weak_low_value)}")
+    if not weak_low_value:
+        lines.append("│ ✓ No weak low-value residue surfaced by current heuristics")
+    else:
+        for capture in weak_low_value[: args.short_limit]:
+            lines.append(f"│ #{capture.id}  [{capture.review_state}] [{capture.source_family}]")
             lines.append(f"│   {preview(capture.text)}")
     lines.append("")
 
     lines.append("╭─ NOTES")
     lines.append("│ This tool is read-only.")
-    lines.append("│ Short-capture detection is intentionally blunt; compact notes can still be useful.")
+    lines.append("│ Residue classification is heuristic and intentionally lightweight; it is not stored as state.")
+    lines.append("│ Meaningful extracted pressure stays near the top of default surfacing.")
+    lines.append("│ Weak low-value residue remains visible, but is called out as deprioritized by default.")
     lines.append("│ Duplicate detection only catches exact normalized matches, not semantic overlap.")
     lines.append("╰─")
     return "\n".join(lines)
