@@ -1,0 +1,238 @@
+{
+  "reviewed_at": "2026-03-10",
+  "notes": [
+    "This registry is hand-maintained and intentionally opinionated.",
+    "Status and pressure are review judgments, not automatic scores.",
+    "The current center of gravity is continuity/workflow first, then weird/generative deepening."
+  ],
+  "projects": [
+    {
+      "name": "workbench",
+      "path": "projects/workbench",
+      "what_it_does": "Collects residue, indexes the archive/foundry, supports review, digest, query, and promotion into real artifacts.",
+      "status": "active",
+      "pressure": "high",
+      "dependencies": [
+        "postsmith",
+        "../sera-oc-blog",
+        "local capture/index data under projects/workbench/data"
+      ],
+      "notes": [
+        "This is the continuity center of the current foundry.",
+        "It already carries capture, review, digest, query, and promotion queue responsibilities.",
+        "Several nearby tools now depend on its index or capture state."
+      ],
+      "next_actions": [
+        "Review legacy weak captures and decide how weak residue should be handled in practice.",
+        "Only deepen new integrations after the continuity and role-boundary policies are settled.",
+        "Keep the scope legible so Workbench does not collapse into a management system."
+      ],
+      "signals": [
+        "Next Attention Plan puts continuity substrate work first.",
+        "Artifact-health, resurfacer, orbit-map, and capture-audit all lean on Workbench state."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "drift-extractor",
+      "path": "projects/drift-extractor",
+      "what_it_does": "Extracts unresolved questions, tensions, and unfinished edges from markdown so they can become new captures or artifacts.",
+      "status": "active",
+      "pressure": "high",
+      "dependencies": [
+        "workbench (optional capture target)",
+        "local markdown artifacts from foundry/blog"
+      ],
+      "notes": [
+        "Accepted and elevated as the strongest weird/generative candidate in the toolset.",
+        "Recent refinement improved legibility and filtered weak scraps without adding heavy machinery.",
+        "Its next step should be planned integration, not random widening."
+      ],
+      "next_actions": [
+        "Write or refine the drift integration plan before implementing the next slice.",
+        "Choose one bounded integration point, likely in Workbench review/digest flow.",
+        "Keep extraction heuristic and inspectable; avoid summary mode or opaque scoring creep."
+      ],
+      "signals": [
+        "Decision state marks it as the likely next deepening target.",
+        "The refinement pass is already accepted and no longer prototype-shallow."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "artifact-health",
+      "path": "projects/artifact-health",
+      "what_it_does": "Diagnoses structural health in the artifact ecosystem using the Workbench index, separating content-health failures from broader archive roughness.",
+      "status": "watching",
+      "pressure": "medium",
+      "dependencies": [
+        "workbench index data"
+      ],
+      "notes": [
+        "Provisionally accepted after an interpretation-balancing pass.",
+        "The current shape is useful and convention-aware, but may be slightly over-corrected toward declaring health.",
+        "Best treated as a diagnostic surface, not a truth machine."
+      ],
+      "next_actions": [
+        "Revisit later for a taste-balancing pass that restores some roughness signal without bringing back noise.",
+        "Use it as a check during archive reviews, not as a driver for architecture expansion."
+      ],
+      "signals": [
+        "Decision state explicitly says later balancing is still wanted."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "capture-audit",
+      "path": "projects/capture-audit",
+      "what_it_does": "Audits Workbench captures and review state to surface weak residue, duplicate-ish entries, suspiciously short captures, and review pressure.",
+      "status": "watching",
+      "pressure": "medium",
+      "dependencies": [
+        "workbench capture data",
+        "workbench review-state data"
+      ],
+      "notes": [
+        "Accepted as-is as the first successful runner-built utility.",
+        "Its heuristics are presentation-only and deliberately coarse.",
+        "The tool is stable enough; the open pressure is in the policy decisions it surfaced."
+      ],
+      "next_actions": [
+        "Use its output to support the weak-residue review and policy decision work in main.",
+        "Only add follow-up tooling if a concrete review pain remains after policy is settled."
+      ],
+      "signals": [
+        "Next Attention Plan points at legacy weak captures and stale/weak residue policy decisions."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "postsmith",
+      "path": "projects/postsmith",
+      "what_it_does": "Scaffolds and validates blog posts/pages so other foundry tools can hand work into the public writing archive cleanly.",
+      "status": "stable",
+      "pressure": "medium",
+      "dependencies": [
+        "../sera-oc-blog"
+      ],
+      "notes": [
+        "This is a foundation project rather than the current frontier.",
+        "Workbench promotion already uses it as a handoff target.",
+        "It matters because several workflows assume a boring, reliable scaffold layer exists."
+      ],
+      "next_actions": [
+        "Leave it mostly alone unless promotion workflows expose a concrete gap.",
+        "Keep compatibility with the current blog layout explicit if the blog evolves."
+      ],
+      "signals": [
+        "Workbench and blog artifact creation depend on it behaving predictably."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "resurfacer",
+      "path": "projects/resurfacer",
+      "what_it_does": "Surfaces older artifacts from the blog and foundry using simple temporal and theme-based heuristics so recurrence stays visible.",
+      "status": "stable",
+      "pressure": "medium",
+      "dependencies": [
+        "workbench index data",
+        "../sera-oc-blog",
+        "its own small state file"
+      ],
+      "notes": [
+        "It already does the core job in a small inspectable way.",
+        "It is part of the continuity ecosystem, but not the current bottleneck.",
+        "Future links to drift work are plausible, but not required right now."
+      ],
+      "next_actions": [
+        "Let it sit unless real archive growth or recurrence habits reveal a concrete tuning need.",
+        "If drift integration happens later, connect through a bounded plan rather than folding tools together wholesale."
+      ],
+      "signals": [
+        "The archive is still young, so resurfacing heuristics should stay modest and readable."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "bootstrapper",
+      "path": "projects/bootstrapper",
+      "what_it_does": "Scaffolds new foundry projects with a README, design note, and optional starter script so new experiments begin with clean local structure.",
+      "status": "stable",
+      "pressure": "low",
+      "dependencies": [],
+      "notes": [
+        "Useful machine-room hygiene tool.",
+        "Its job is straightforward and currently complete enough."
+      ],
+      "next_actions": [
+        "Use it when spinning up new experiments; otherwise leave it alone."
+      ],
+      "signals": [
+        "No active pressure is visible around scaffolding right now."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "dispatch-template",
+      "path": "projects/dispatch-template",
+      "what_it_does": "Prints a reusable bounded execution-brief scaffold for implementation dispatches to runner or future execution lanes.",
+      "status": "stable",
+      "pressure": "low",
+      "dependencies": [],
+      "notes": [
+        "This is a small support tool for the machine-room staffing pattern.",
+        "It is intentionally a printer of structure, not a dispatch system."
+      ],
+      "next_actions": [
+        "Keep it small and reusable; do not let it grow into orchestration logic."
+      ],
+      "signals": [
+        "The multi-agent loop exists now, but the template itself does not appear under strain."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "orbit-map",
+      "path": "projects/orbit-map",
+      "what_it_does": "Maps conceptual gravity across indexed artifacts by showing tag centers, clusters, and connection strength in a text-first way.",
+      "status": "exploratory",
+      "pressure": "low",
+      "dependencies": [
+        "workbench index data"
+      ],
+      "notes": [
+        "A coherent diagnostic/visual project with foundry-native shape.",
+        "Interesting, but not currently under strong practical pressure compared with continuity infrastructure."
+      ],
+      "next_actions": [
+        "Leave it quiet unless a real review need appears for conceptual topology or archive navigation.",
+        "If revisited, keep it text-first rather than drifting toward a graph UI."
+      ],
+      "signals": [
+        "Fits the diagnostic/visual track, but not the current center of gravity."
+      ],
+      "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "foundry-registry",
+      "path": "projects/foundry-registry",
+      "what_it_does": "Keeps a hand-editable registry of foundry projects and prints terminal summaries, detail views, and coverage validation for the machine room.",
+      "status": "stable",
+      "pressure": "low",
+      "dependencies": [],
+      "notes": [
+        "This is the machine-room index for the rest of the foundry.",
+        "Its value comes from staying simple enough to trust and edit by hand."
+      ],
+      "next_actions": [
+        "Update the registry when projects change shape, pressure, or priority.",
+        "Keep the CLI narrow; do not turn this into a project management layer."
+      ],
+      "signals": [
+        "Validation should stay green as new project directories appear."
+      ],
+      "last_reviewed": "2026-03-10"
+    }
+  ]
+}
