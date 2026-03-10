@@ -3,7 +3,8 @@
   "notes": [
     "This registry is hand-maintained and intentionally opinionated.",
     "Status and pressure are review judgments, not automatic scores.",
-    "The current center of gravity is continuity/workflow first, then weird/generative deepening."
+    "The current center of gravity is continuity/workflow first, then weird/generative deepening.",
+    "Refresh it after meaningful implementation or doctrine shifts so the machine-room view stays trustworthy."
   ],
   "projects": [
     {
@@ -18,18 +19,18 @@
         "local capture/index data under projects/workbench/data"
       ],
       "notes": [
-        "This is the continuity center of the current foundry.",
-        "It already carries capture, review, digest, query, and promotion queue responsibilities.",
-        "Several nearby tools now depend on its index or capture state."
+        "This is still the continuity center of the current foundry.",
+        "The weak-residue review and handling policy now exist as explicit notes rather than only open irritation.",
+        "Several nearby tools depend on its capture, review, digest, and promotion state staying legible."
       ],
       "next_actions": [
-        "Review legacy weak captures and decide how weak residue should be handled in practice.",
-        "Only deepen new integrations after the continuity and role-boundary policies are settled.",
+        "Operationalize the continuity doctrine and memory-promotion practice through ordinary use rather than more abstract planning.",
+        "Only add weak-residue helper behavior if review surfaces still feel noisy after the new policy is lived a bit.",
         "Keep the scope legible so Workbench does not collapse into a management system."
       ],
       "signals": [
-        "Next Attention Plan puts continuity substrate work first.",
-        "Artifact-health, resurfacer, orbit-map, and capture-audit all lean on Workbench state."
+        "Continuity layering, memory promotion, and weak-residue policy are now explicit parts of the substrate around it.",
+        "Artifact-health, resurfacer, orbit-map, and capture-audit still lean on Workbench state."
       ],
       "last_reviewed": "2026-03-10"
     },
@@ -45,17 +46,17 @@
       ],
       "notes": [
         "Accepted and elevated as the strongest weird/generative candidate in the toolset.",
-        "Recent refinement improved legibility and filtered weak scraps without adding heavy machinery.",
-        "Its next step should be planned integration, not random widening."
+        "A concrete integration plan now exists, and recurrence structures give its outputs a more meaningful downstream home.",
+        "The next move is a bounded review/integration slice, not more standalone widening."
       ],
       "next_actions": [
-        "Write or refine the drift integration plan before implementing the next slice.",
-        "Choose one bounded integration point, likely in Workbench review/digest flow.",
-        "Keep extraction heuristic and inspectable; avoid summary mode or opaque scoring creep."
+        "Use the integration plan to choose one bounded next slice, likely a drift review helper or similarly narrow review surface.",
+        "Keep extraction heuristic and inspectable; avoid summary mode, heavy state, or opaque scoring creep.",
+        "Let recurrence usage teach what downstream shape is needed before adding more export or ontology machinery."
       ],
       "signals": [
-        "Decision state marks it as the likely next deepening target.",
-        "The refinement pass is already accepted and no longer prototype-shallow."
+        "Decision state still marks it as the likely next deepening target.",
+        "Drift-extractor integration plan and continuity recurrence notes now exist as concrete framing artifacts."
       ],
       "last_reviewed": "2026-03-10"
     },
@@ -63,22 +64,22 @@
       "name": "artifact-health",
       "path": "projects/artifact-health",
       "what_it_does": "Diagnoses structural health in the artifact ecosystem using the Workbench index, separating content-health failures from broader archive roughness.",
-      "status": "watching",
-      "pressure": "medium",
+      "status": "stable",
+      "pressure": "low",
       "dependencies": [
         "workbench index data"
       ],
       "notes": [
-        "Provisionally accepted after an interpretation-balancing pass.",
-        "The current shape is useful and convention-aware, but may be slightly over-corrected toward declaring health.",
-        "Best treated as a diagnostic surface, not a truth machine."
+        "Accepted after the interpretation and balancing passes; it is good enough to pause.",
+        "Its current shape separates content-health failures from broader archive roughness in a useful way.",
+        "Best treated as a diagnostic surface, not a truth machine or architecture driver."
       ],
       "next_actions": [
-        "Revisit later for a taste-balancing pass that restores some roughness signal without bringing back noise.",
-        "Use it as a check during archive reviews, not as a driver for architecture expansion."
+        "Leave it quiet unless real archive review reveals a concrete tuning need.",
+        "If revisited later, treat the work as taste-balancing rather than rescue or expansion."
       ],
       "signals": [
-        "Decision state explicitly says later balancing is still wanted."
+        "Settled state says the balancing pass was accepted as-is and future work should be tuning, not rescue."
       ],
       "last_reviewed": "2026-03-10"
     },
@@ -87,22 +88,22 @@
       "path": "projects/capture-audit",
       "what_it_does": "Audits Workbench captures and review state to surface weak residue, duplicate-ish entries, suspiciously short captures, and review pressure.",
       "status": "watching",
-      "pressure": "medium",
+      "pressure": "low",
       "dependencies": [
         "workbench capture data",
         "workbench review-state data"
       ],
       "notes": [
         "Accepted as-is as the first successful runner-built utility.",
-        "Its heuristics are presentation-only and deliberately coarse.",
-        "The tool is stable enough; the open pressure is in the policy decisions it surfaced."
+        "Its heuristics remain presentation-only and deliberately coarse.",
+        "The policy questions it surfaced have now turned into explicit review and handling notes."
       ],
       "next_actions": [
-        "Use its output to support the weak-residue review and policy decision work in main.",
-        "Only add follow-up tooling if a concrete review pain remains after policy is settled."
+        "Keep using it as a support surface during archive review rather than expanding it preemptively.",
+        "Only revisit the tool if lived weak-residue handling exposes a concrete default-view problem that simple policy alone does not solve."
       ],
       "signals": [
-        "Next Attention Plan points at legacy weak captures and stale/weak residue policy decisions."
+        "Weak residue review and weak residue handling policy now exist, lowering pressure on the tool itself."
       ],
       "last_reviewed": "2026-03-10"
     },
@@ -142,15 +143,15 @@
       ],
       "notes": [
         "It already does the core job in a small inspectable way.",
-        "It is part of the continuity ecosystem, but not the current bottleneck.",
-        "Future links to drift work are plausible, but not required right now."
+        "It sits near the new creative-recurrence line, but the recurrence structures are notes-first for now rather than tool pressure.",
+        "It remains part of the continuity ecosystem without being the current bottleneck."
       ],
       "next_actions": [
-        "Let it sit unless real archive growth or recurrence habits reveal a concrete tuning need.",
-        "If drift integration happens later, connect through a bounded plan rather than folding tools together wholesale."
+        "Let it sit unless real archive growth or recurrence practice reveals a concrete tuning need.",
+        "If recurrence or drift integration touches it later, do so through a bounded plan rather than folding tools together wholesale."
       ],
       "signals": [
-        "The archive is still young, so resurfacing heuristics should stay modest and readable."
+        "Creative recurrence structures now exist as a note-level experiment, which clarifies that resurfacer does not need to absorb that role yet."
       ],
       "last_reviewed": "2026-03-10"
     },
@@ -222,15 +223,17 @@
       "pressure": "low",
       "dependencies": [],
       "notes": [
-        "This is the machine-room index for the rest of the foundry.",
-        "Its value comes from staying simple enough to trust and edit by hand."
+        "This is now a live machine-room surface rather than just a seeded inventory file.",
+        "Its value comes from staying simple enough to trust and edit by hand.",
+        "It should reflect settled decisions and current pressure, not pretend to be automation."
       ],
       "next_actions": [
-        "Update the registry when projects change shape, pressure, or priority.",
+        "Refresh the registry after meaningful implementation, review, or doctrine shifts so it stays believable.",
         "Keep the CLI narrow; do not turn this into a project management layer."
       ],
       "signals": [
-        "Validation should stay green as new project directories appear."
+        "Validation should stay green as new project directories appear.",
+        "This alignment pass establishes the registry as part of normal machine-room maintenance."
       ],
       "last_reviewed": "2026-03-10"
     }

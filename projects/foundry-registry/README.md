@@ -21,6 +21,7 @@ It is a small text-first index with a tiny CLI.
 
 The registry is meant to be edited by hand.
 The CLI is there to make review easier, not to hide the data.
+Refresh it after meaningful implementation, review, or doctrine shifts so the machine-room view stays current.
 
 ## Usage
 
