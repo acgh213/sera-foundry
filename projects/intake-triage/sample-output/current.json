@@ -1,0 +1,119 @@
+{
+  "generated": "2026-03-11T01:19:09.060585",
+  "total_items": 10,
+  "items": [
+    {
+      "text": "Client asked about pricing for enterprise tier ASAP",
+      "source": "email",
+      "timestamp": "2026-03-11T09:15:00Z",
+      "triage": {
+        "disposition": "respond-soon",
+        "urgency": "high",
+        "confidence": "high",
+        "rationale": "Contains urgency indicators requiring timely response",
+        "hooks": [
+          "asap"
+        ]
+      }
+    },
+    {
+      "text": "Interesting pattern in how users describe the onboarding flow",
+      "source": "support-tickets",
+      "timestamp": "2026-03-11T10:22:00Z",
+      "triage": {
+        "disposition": "note-candidate",
+        "urgency": "low",
+        "confidence": "high",
+        "rationale": "Observational insight worth capturing"
+      }
+    },
+    {
+      "text": "Quarterly planning meeting scheduled for Friday",
+      "source": "calendar",
+      "timestamp": "2026-03-11T11:00:00Z",
+      "triage": {
+        "disposition": "unclear",
+        "urgency": "none",
+        "confidence": "low",
+        "rationale": "Cannot determine clear disposition from available information"
+      }
+    },
+    {
+      "text": "Should we build a system for tracking feature requests?",
+      "source": "team-chat",
+      "timestamp": "2026-03-11T11:45:00Z",
+      "triage": {
+        "disposition": "respond-soon",
+        "urgency": "medium",
+        "confidence": "high",
+        "rationale": "Direct question requiring response"
+      }
+    },
+    {
+      "text": "FYI: new security patch released for dependency XYZ",
+      "source": "security-alerts",
+      "timestamp": "2026-03-11T12:10:00Z",
+      "triage": {
+        "disposition": "ambient",
+        "urgency": "none",
+        "confidence": "high",
+        "rationale": "Background context or FYI, no action required"
+      }
+    },
+    {
+      "text": "Spam advertising message",
+      "source": "email",
+      "timestamp": "2026-03-11T12:30:00Z",
+      "triage": {
+        "disposition": "ignore",
+        "urgency": "none",
+        "confidence": "medium",
+        "rationale": "Appears to be spam, test, or not relevant"
+      }
+    },
+    {
+      "text": "How do we handle rate limiting in the API?",
+      "source": "internal-question",
+      "timestamp": "2026-03-11T13:00:00Z",
+      "triage": {
+        "disposition": "respond-soon",
+        "urgency": "medium",
+        "confidence": "high",
+        "rationale": "Direct question requiring response"
+      }
+    },
+    {
+      "text": "Need to update documentation before next release",
+      "source": "task-backlog",
+      "timestamp": "2026-03-11T13:30:00Z",
+      "triage": {
+        "disposition": "actionable",
+        "urgency": "low",
+        "confidence": "medium",
+        "rationale": "Contains action language or request"
+      }
+    },
+    {
+      "text": "xyz",
+      "source": "unknown",
+      "timestamp": "2026-03-11T14:00:00Z",
+      "triage": {
+        "disposition": "ignore",
+        "urgency": "none",
+        "confidence": "medium",
+        "rationale": "Appears to be spam, test, or not relevant"
+      }
+    },
+    {
+      "text": "Noticed that mobile users consistently struggle with the checkout flow - multiple support tickets mention confusion about the payment confirmation step",
+      "source": "support-analysis",
+      "timestamp": "2026-03-11T14:30:00Z",
+      "triage": {
+        "disposition": "note-candidate",
+        "urgency": "low",
+        "confidence": "high",
+        "rationale": "Observational insight worth capturing"
+      }
+    }
+  ]
+}

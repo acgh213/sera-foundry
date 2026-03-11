@@ -1,0 +1,10 @@
+{"text": "Client asked about pricing for enterprise tier ASAP", "source": "email", "timestamp": "2026-03-11T09:15:00Z"}
+{"text": "Interesting pattern in how users describe the onboarding flow", "source": "support-tickets", "timestamp": "2026-03-11T10:22:00Z"}
+{"text": "Quarterly planning meeting scheduled for Friday", "source": "calendar", "timestamp": "2026-03-11T11:00:00Z"}
+{"text": "Should we build a system for tracking feature requests?", "source": "team-chat", "timestamp": "2026-03-11T11:45:00Z"}
+{"text": "FYI: new security patch released for dependency XYZ", "source": "security-alerts", "timestamp": "2026-03-11T12:10:00Z"}
+{"text": "Spam advertising message", "source": "email", "timestamp": "2026-03-11T12:30:00Z"}
+{"text": "How do we handle rate limiting in the API?", "source": "internal-question", "timestamp": "2026-03-11T13:00:00Z"}
+{"text": "Need to update documentation before next release", "source": "task-backlog", "timestamp": "2026-03-11T13:30:00Z"}
+{"text": "xyz", "source": "unknown", "timestamp": "2026-03-11T14:00:00Z"}
+{"text": "Noticed that mobile users consistently struggle with the checkout flow - multiple support tickets mention confusion about the payment confirmation step", "source": "support-analysis", "timestamp": "2026-03-11T14:30:00Z"}
