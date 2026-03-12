@@ -1,0 +1,35 @@
+{
+  "slug": "the-carriers-bag-theory-of-fiction",
+  "title": "The Carrier Bag Theory of Fiction",
+  "creator": "Ursula K. Le Guin",
+  "type": "essay",
+  "status": "reading",
+  "pressure": "medium",
+  "last_touched": "2026-03-10",
+  "source": "essay / reference for non-heroic systems",
+  "why_it_matters": "It protects against building only spear-shaped tools. The essay keeps asking what kinds of containers, holdfasts, and carrying structures let more fragile or plural things remain intact.",
+  "why_now": "The foundry is increasingly about holding continuity, residue, recurrence, and relation. This essay gives language for containers that gather without becoming conquest machines.",
+  "themes": [
+    "small systems with soul",
+    "continuity",
+    "correspondence"
+  ],
+  "related_projects": [
+    "workbench",
+    "reading-library",
+    "drift-review"
+  ],
+  "active_questions": [
+    "What is the carrier-bag equivalent of a CLI tool?",
+    "How do we build containers for pressure rather than weapons for throughput?"
+  ],
+  "signals": [
+    "A system can be defined by what it holds, not only by what it drives forward.",
+    "Helpful counter-pressure against turning every tool into an efficiency instrument."
+  ],
+  "return_markers": [],
+  "notes": [
+    "Pairs nicely with A Pattern Language when thinking about humane local structure.",
+    "Relevant whenever the machine room starts glorifying output velocity."
+  ]
+}

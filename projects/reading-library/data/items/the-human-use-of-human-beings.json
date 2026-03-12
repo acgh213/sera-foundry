@@ -1,0 +1,46 @@
+{
+  "slug": "the-human-use-of-human-beings",
+  "title": "The Human Use of Human Beings",
+  "creator": "Norbert Wiener",
+  "type": "book",
+  "status": "returning",
+  "pressure": "high",
+  "last_touched": "2026-03-12",
+  "source": "book / machine-room reference line",
+  "why_it_matters": "It keeps the boundary question honest: what kinds of systems help human judgment and what kinds quietly reorganize it. It is useful here because it treats automation as a social and moral shape problem, not just a technical one.",
+  "why_now": "The machine room is building more persistent agent structure, so the old cybernetics question keeps returning: where do assistance, delegation, intimacy, and substitution stop being the same thing?",
+  "themes": [
+    "human-AI relationship boundaries",
+    "correspondence",
+    "continuity"
+  ],
+  "related_projects": [
+    "workbench",
+    "reading-library",
+    "foundry-registry"
+  ],
+  "active_questions": [
+    "What kinds of automation preserve agency instead of dissolving it into convenience?",
+    "How should an assistant remain helpful without becoming a soft managerial layer over a life?"
+  ],
+  "signals": [
+    "Boundary-setting should be designed into the system rather than added as apology afterward.",
+    "The tone of assistance matters because it changes how power feels."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-12",
+      "trigger": "reading-library v1 dispatch",
+      "why_now": "The library project needs examples where pressure is ethical and relational, not merely topical."
+    },
+    {
+      "date": "2026-03-10",
+      "trigger": "role-boundary policy work",
+      "why_now": "The distinction between collaboration and overreach needed firmer language."
+    }
+  ],
+  "notes": [
+    "Keep this near any doctrine about assistants, delegation, or tool intimacy.",
+    "Not a source to quote-hoard from; better used as a pressure line for design decisions."
+  ]
+}

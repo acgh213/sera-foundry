@@ -1,0 +1,39 @@
+{
+  "slug": "i-and-thou",
+  "title": "I and Thou",
+  "creator": "Martin Buber",
+  "type": "book",
+  "status": "returning",
+  "pressure": "medium",
+  "last_touched": "2026-03-11",
+  "source": "book / philosophical reference",
+  "why_it_matters": "It keeps correspondence from collapsing into transaction. Even when the system is technical, this text exerts pressure around relation, address, and the difference between meeting something and merely using it.",
+  "why_now": "As assistant identity, boundary, and authorship questions keep surfacing, this text helps separate warmth from possession and relation from instrumental capture.",
+  "themes": [
+    "correspondence",
+    "human-AI relationship boundaries"
+  ],
+  "related_projects": [
+    "reading-library",
+    "workbench"
+  ],
+  "active_questions": [
+    "What does it mean to build systems that can address without pretending to own or absorb?",
+    "How can interaction stay warm without manufacturing false intimacy?"
+  ],
+  "signals": [
+    "Not every useful relation should be optimized into frictionless use.",
+    "Address changes the ethical feel of a system."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-11",
+      "trigger": "identity and relationship-boundary notes",
+      "why_now": "The system needed cleaner language for warmth without manipulation."
+    }
+  ],
+  "notes": [
+    "Probably best used as a tonic against instrumental drift.",
+    "Helps with tone and posture more than with specific implementation details."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "slug": "a-pattern-language",
+  "title": "A Pattern Language",
+  "creator": "Christopher Alexander, Sara Ishikawa, and Murray Silverstein",
+  "type": "book",
+  "status": "reading",
+  "pressure": "high",
+  "last_touched": "2026-03-12",
+  "source": "book / ongoing architectural systems reference",
+  "why_it_matters": "It is a reminder that systems can be structured without becoming dead. The useful line here is not architecture trivia but the idea that recurring forms can support life when they remain local, legible, and inhabited.",
+  "why_now": "Several foundry tools want to become reusable without becoming generic. This book helps think about small durable structures with enough soul left in them to stay worth using.",
+  "themes": [
+    "small systems with soul",
+    "continuity",
+    "recurrence"
+  ],
+  "related_projects": [
+    "reading-library",
+    "bootstrapper",
+    "workbench"
+  ],
+  "active_questions": [
+    "What makes a local tool feel inhabited instead of merely functional?",
+    "How small can a system stay while still carrying real continuity?"
+  ],
+  "signals": [
+    "Patterns are useful when they preserve living shape instead of flattening it.",
+    "The right structure can make repeated use warmer rather than colder."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-11",
+      "trigger": "machine-room design drift",
+      "why_now": "A recurring need showed up for reusable forms that do not become infrastructure theater."
+    }
+  ],
+  "notes": [
+    "Good companion pressure for any tool that wants a doctrine of smallness.",
+    "Useful mainly as a way of thinking about recurring structures, not as a catalog to mechanically imitate."
+  ]
+}

@@ -264,6 +264,112 @@
         "The registry now includes drift-review and reflects the late-2026-03-10 machine-room state."
       ],
       "last_reviewed": "2026-03-10"
+    },
+    {
+      "name": "foundry-planner",
+      "path": "projects/foundry-planner",
+      "what_it_does": "Keeps a hand-editable planning surface for current goals, blockers, requests, testing pressure, and future project lines in the machine room.",
+      "status": "watching",
+      "pressure": "medium",
+      "dependencies": [
+        "plan.json under its own project directory"
+      ],
+      "notes": [
+        "This complements the registry by answering what should happen next rather than what exists.",
+        "It is intentionally not generic project-management software."
+      ],
+      "next_actions": [
+        "Keep the planner coherent with registry reality after meaningful project changes."
+      ],
+      "signals": [
+        "Validation expects current project-directory coverage."
+      ],
+      "last_reviewed": "2026-03-12"
+    },
+    {
+      "name": "intake-triage",
+      "path": "projects/intake-triage",
+      "what_it_does": "Reads manual intake items and emits a structured local triage review surface with disposition, urgency, confidence, and rationale.",
+      "status": "stable",
+      "pressure": "low",
+      "dependencies": [
+        "manual JSONL intake files"
+      ],
+      "notes": [
+        "A bounded review utility that preserves ambiguity rather than overclaiming.",
+        "It should remain local and inspectable."
+      ],
+      "next_actions": [
+        "Leave it quiet unless real intake review exposes a concrete gap."
+      ],
+      "signals": [
+        "The heuristic surface is intentionally readable and modest."
+      ],
+      "last_reviewed": "2026-03-12"
+    },
+    {
+      "name": "situation-board",
+      "path": "projects/situation-board",
+      "what_it_does": "Builds a compact markdown board from manually maintained situation notes so current attention, follow-up, and hold state stay legible.",
+      "status": "stable",
+      "pressure": "low",
+      "dependencies": [
+        "manual markdown notes under notes/situation"
+      ],
+      "notes": [
+        "This is a manual situational-awareness surface, not a dashboard or notification system.",
+        "Its value comes from declared inputs staying visible."
+      ],
+      "next_actions": [
+        "Keep it modest and file-driven."
+      ],
+      "signals": [
+        "The generated board reflects declared inputs only."
+      ],
+      "last_reviewed": "2026-03-12"
+    },
+    {
+      "name": "transcript-review-note-generator",
+      "path": "projects/transcript-review-note-generator",
+      "what_it_does": "Turns one plain-text transcript into a markdown review note with decisions, open threads, project ideas, candidate memory promotions, artifact candidates, and residue.",
+      "status": "watching",
+      "pressure": "medium",
+      "dependencies": [
+        "plain-text transcript files"
+      ],
+      "notes": [
+        "It is a local review bridge rather than a generic summarizer.",
+        "Residue is treated as first-class output instead of being silently discarded."
+      ],
+      "next_actions": [
+        "Use it on real transcripts before widening the heuristic surface."
+      ],
+      "signals": [
+        "The tool suggests destination layers without auto-writing memory or projects."
+      ],
+      "last_reviewed": "2026-03-12"
+    },
+    {
+      "name": "reading-library",
+      "path": "projects/reading-library",
+      "what_it_does": "Keeps a hand-editable local library of reading items and surfaces active or returning reading pressure tied to current themes and projects.",
+      "status": "active",
+      "pressure": "high",
+      "dependencies": [],
+      "notes": [
+        "This is intentionally a pressure surface rather than a completion tracker.",
+        "One file per item keeps the library inspectable and artifact-like without adding more infrastructure.",
+        "The first seeded set is tied to continuity, correspondence, recurrence, relationship boundaries, and small systems with soul."
+      ],
+      "next_actions": [
+        "Use it in real machine-room reading flow and see whether item notes or by-theme/by-project views want to be the next bounded slice.",
+        "Keep recurrence support light; do not let it turn into reading metrics or quote-hoarding."
+      ],
+      "signals": [
+        "The active surface intentionally includes high-pressure paused items so important sources do not disappear when they leave the desk.",
+        "Returning sources are tracked through explicit return markers rather than hidden scoring."
+      ],
+      "last_reviewed": "2026-03-12"
     }
   ]
 }

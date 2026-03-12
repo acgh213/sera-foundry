@@ -1,0 +1,41 @@
+{
+  "slug": "how-buildings-learn",
+  "title": "How Buildings Learn",
+  "creator": "Stewart Brand",
+  "type": "book",
+  "status": "paused",
+  "pressure": "high",
+  "last_touched": "2026-03-09",
+  "source": "book / continuity and change reference",
+  "why_it_matters": "It makes continuity legible as adaptation over time rather than purity at a single moment. That matters for machine-room tools, which are being asked to remain themselves while changing through use.",
+  "why_now": "Even paused, it still exerts pressure because the foundry is negotiating reuse, revision, and growth. The project line is not to freeze a system in place but to let it learn without losing shape.",
+  "themes": [
+    "continuity",
+    "recurrence",
+    "small systems with soul"
+  ],
+  "related_projects": [
+    "workbench",
+    "reading-library",
+    "foundry-registry"
+  ],
+  "active_questions": [
+    "How does a local tool change through use without becoming a different kind of thing?",
+    "What should remain stable, and what should stay easy to revise by hand?"
+  ],
+  "signals": [
+    "Use leaves traces; a good system should expect them.",
+    "Durability often comes from layered change rather than polished stasis."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-09",
+      "trigger": "continuity doctrine notes",
+      "why_now": "The distinction between rigid consistency and layered continuity needed a better supporting source."
+    }
+  ],
+  "notes": [
+    "Status is paused, but pressure remains high because it keeps feeding continuity language.",
+    "Good proof that active pressure should not equal open-tab recency."
+  ]
+}
