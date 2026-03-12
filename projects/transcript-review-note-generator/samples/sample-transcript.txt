@@ -1,0 +1,11 @@
+Cassie: Let's keep this first bridge local-only and text-first.
+Sera: Agreed. No dashboard, no network service, and no automatic memory writing in v1.
+Cassie: The point is to review what might deserve promotion without flattening everything into summary.
+Sera: We should produce a markdown review note with decisions, open threads, project ideas, memory candidates, artifact candidates, and residue.
+Cassie: I'm not sure yet whether line-level evidence is enough or whether we need chunked spans later.
+Sera: That sounds like an open thread for the next slice.
+Cassie: The phrase "residue shame" probably deserves a short doctrine note later.
+Sera: Also, don't let the tool pretend certainty when the conversation is ambiguous.
+Cassie: Cassie prefers inspectable local tools over hidden automation.
+Sera: Nice. Let's ship a small CLI first.
+Cassie: Cool, thanks.

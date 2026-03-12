@@ -1,0 +1,817 @@
+{
+  "updated_at": "2026-03-12",
+  "notes": [
+    "This planner answers what the machine room is trying to do next, not just what exists.",
+    "Edit this file by hand; the CLI is a reading and validation surface, not hidden state.",
+    "Use empty path values for future/planned projects that do not have a directory yet."
+  ],
+  "projects": [
+    {
+      "slug": "workbench",
+      "name": "Workbench",
+      "status": "active",
+      "lane": "workflow",
+      "horizon": "now",
+      "summary": "Continuity center for capture, review, digest, query, and promotion across the foundry/archive boundary.",
+      "path": "projects/workbench",
+      "current_goal": {
+        "title": "Tighten the residue → queue → artifact path without turning Workbench into management sludge",
+        "why_now": "It remains the center of gravity and several nearby tools depend on it staying legible in ordinary use.",
+        "success_signals": [
+          "Promotion queue hygiene feels clean in real use",
+          "Review and promotion states are still inspectable without extra machinery",
+          "Continuity doctrine is being lived rather than only documented"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Do one bounded promotion-queue cleanup slice: list/filter defaults, failed/cancelled handling, and archive/reset semantics",
+          "owner": "runner",
+          "state": "ready"
+        },
+        {
+          "text": "Use memory-promotion practice during ordinary sessions and note where the workflow still feels rough",
+          "owner": "main",
+          "state": "queued"
+        },
+        {
+          "text": "Only add helper behavior for weak residue if lived review still feels noisy after the policy has been used a bit",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "workflow",
+          "text": "Clearer queue behavior for failed/cancelled/executed items",
+          "state": "open"
+        },
+        {
+          "type": "feature",
+          "text": "Better title/default handling where promotion scaffolds still feel slightly messy",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Run real residue → review → promotion passes and see whether queue cleanup actually reduces friction",
+          "Check that new defaults stay legible on non-happy-path queue states"
+        ],
+        "notes": [
+          "The right test here is lived workflow, not synthetic coverage theater."
+        ]
+      },
+      "context": [
+        "Still the continuity center of the current foundry",
+        "Artifact-health, capture-audit, orbit-map, and resurfacer still lean on Workbench state"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "drift-extractor",
+      "name": "drift-extractor",
+      "status": "active",
+      "lane": "weird",
+      "horizon": "now",
+      "summary": "Extracts unresolved questions and unfinished edges from markdown so they can become real captures or artifacts.",
+      "path": "projects/drift-extractor",
+      "current_goal": {
+        "title": "Improve extraction quality and choose one bounded downstream integration slice",
+        "why_now": "It is one of the strongest weird/generative lines, but current quality still needs proof through real review rather than abstraction.",
+        "success_signals": [
+          "Top-ranked drift items feel generative instead of chopped",
+          "The next integration slice stays narrow and inspectable",
+          "Review usage teaches what shape is actually missing"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Run drift-review against real source material and note what still feels missing before changing extraction again",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "Do one refinement slice aimed at fuller unresolved edges and better top-candidate ranking",
+          "owner": "runner",
+          "state": "queued"
+        },
+        {
+          "text": "Keep the heuristic inspectable and resist summary-mode creep",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [
+        {
+          "text": "The next integration move should not be picked until lived review exposes the missing shape",
+          "blocking_on": "More real review passes through drift-review and recurrence notes",
+          "state": "waiting"
+        }
+      ],
+      "requests": [
+        {
+          "type": "quality",
+          "text": "Avoid chopped sentence fragments and preserve more context in extracted unresolved edges",
+          "state": "open"
+        },
+        {
+          "type": "parity",
+          "text": "Top 1–3 results should feel meaningfully stronger than the rest rather than flat",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "needs-targeted-pass",
+        "needs": [
+          "Compare extraction output across multiple foundry/blog markdown sources",
+          "Manually review whether the ranking surfaces genuinely interesting recurrence pressure"
+        ],
+        "notes": [
+          "This wants corpus-based manual review, not synthetic correctness claims."
+        ]
+      },
+      "context": [
+        "Accepted as the strongest weird/generative candidate in the current toolset",
+        "A concrete integration plan exists, and drift-review is now its first bounded companion"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "foundry-planner",
+      "name": "foundry-planner",
+      "status": "active",
+      "lane": "coordination",
+      "horizon": "now",
+      "summary": "CLI-first planning surface for projects, current goals, next steps, blockers, requests, and testing state across the machine room.",
+      "path": "projects/foundry-planner",
+      "current_goal": {
+        "title": "Make the planning surface real enough to steer the current foundry instead of staying a stub",
+        "why_now": "The registry now tells us what exists; the foundry needed a separate surface for what should happen next.",
+        "success_signals": [
+          "Current foundry projects have seeded planning state",
+          "The CLI can answer active, blocked, request, and testing questions quickly",
+          "Future work can be represented without inventing hidden infrastructure"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use the planner after meaningful review/implementation shifts so the planning surface stays believable",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "If hand-editing the central plan becomes annoying, add one small helper rather than a management subsystem",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "parity",
+          "text": "Keep alignment with foundry-registry so inventory and planning do not drift into contradiction",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Use the planner during real dispatch/review loops and see whether the seeded schema is enough",
+          "Validate that the board stays readable as more projects accumulate planning state"
+        ],
+        "notes": [
+          "The CLI is implemented and smoke-tested; now it needs ordinary machine-room use."
+        ]
+      },
+      "context": [
+        "Intentionally a forward-planning companion to foundry-registry",
+        "Prefers hand-edited JSON and narrow terminal views over dashboard theater"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "drift-review",
+      "name": "drift-review",
+      "status": "watching",
+      "lane": "weird",
+      "horizon": "now",
+      "summary": "Review surface for drift-extracted captures, grouped by source and hiding weaker residue by default.",
+      "path": "projects/drift-review",
+      "current_goal": {
+        "title": "Prove the review surface in real usage before deciding whether it needs one more helper move",
+        "why_now": "It was accepted and elevated, but its shape still needs lived pressure to show whether it is sufficient.",
+        "success_signals": [
+          "Real review sessions feel materially clearer",
+          "Weak residue stays out of the way by default",
+          "Any missing move is concrete and bounded"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use it during real drift review sessions and record what navigation or context feels missing",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "Only deepen it if recurrence-facing review exposes a concrete missing move",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [
+        {
+          "text": "Further design depends on observing real review behavior rather than speculating",
+          "blocking_on": "Hands-on review sessions with current drift-extractor output",
+          "state": "waiting"
+        }
+      ],
+      "requests": [
+        {
+          "type": "feature",
+          "text": "If review passes reveal pain, consider one narrow helper for excerpt/context movement",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Use the CLI in actual drift review rather than just acceptance smoke tests"
+        ],
+        "notes": [
+          "The central question is usefulness in review, not breadth of features."
+        ]
+      },
+      "context": [
+        "First downstream companion for drift-extractor rather than an expansion of extraction itself"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "capture-audit",
+      "name": "capture-audit",
+      "status": "watching",
+      "lane": "diagnostic",
+      "horizon": "next",
+      "summary": "Audits Workbench captures and review state to surface weak residue, duplicates, suspiciously short captures, and review pressure.",
+      "path": "projects/capture-audit",
+      "current_goal": {
+        "title": "Keep it as a support surface and only revisit if lived weak-residue handling still exposes a default-view problem",
+        "why_now": "Policy notes lowered the pressure on the tool itself, but it may still reveal one concrete presentation gap later.",
+        "success_signals": [
+          "Audit remains useful without becoming a management engine",
+          "Weak residue policy removes most of the old irritation",
+          "Any revisit is prompted by a specific review problem"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use it during archive review and note whether default views still feel too noisy",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "If a concrete problem survives policy alone, do one bounded presentation tweak",
+          "owner": "runner",
+          "state": "queued"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "workflow",
+          "text": "Potentially calmer default view if weak-residue handling still feels loud in practice",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Run it against current capture data during real review sessions"
+        ],
+        "notes": [
+          "Heuristics are intentionally coarse and presentation-only."
+        ]
+      },
+      "context": [
+        "Accepted as the first successful runner-built utility",
+        "Now sits behind explicit weak-residue review and handling policy"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "artifact-health",
+      "name": "artifact-health",
+      "status": "stable",
+      "lane": "diagnostic",
+      "horizon": "later",
+      "summary": "Diagnostic report on structural health in the artifact ecosystem using Workbench index data.",
+      "path": "projects/artifact-health",
+      "current_goal": {
+        "title": "Leave it quiet unless real archive review shows a concrete tuning need",
+        "why_now": "It was accepted after balancing passes and does not appear to be under active strain.",
+        "success_signals": [
+          "The tool stays boring and trusted",
+          "Future work is taste-tuning rather than rescue",
+          "Reports remain diagnostic instead of noisy"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Revisit only if archive review shows false positives or blurred categories",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "quality",
+          "text": "If revisited, further separate true structural issues from convention-driven roughness",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Re-run after meaningful Workbench index changes"
+        ],
+        "notes": [
+          "Currently good enough to pause."
+        ]
+      },
+      "context": [
+        "Best treated as a diagnostic surface, not a truth machine or architecture driver"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "bootstrapper",
+      "name": "bootstrapper",
+      "status": "stable",
+      "lane": "support",
+      "horizon": "later",
+      "summary": "Scaffolds new foundry projects with a README, design note, and optional starter script.",
+      "path": "projects/bootstrapper",
+      "current_goal": {
+        "title": "Keep project scaffolding clean and uneventful",
+        "why_now": "Its job is straightforward and currently complete enough.",
+        "success_signals": [
+          "New projects start with clean local structure",
+          "The tool stays small"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use it when spinning up new experiments; otherwise leave it alone",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Run when creating the next small foundry experiment"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Useful machine-room hygiene tool"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "dispatch-template",
+      "name": "dispatch-template",
+      "status": "stable",
+      "lane": "coordination",
+      "horizon": "later",
+      "summary": "Prints a reusable bounded execution brief scaffold for implementation dispatches.",
+      "path": "projects/dispatch-template",
+      "current_goal": {
+        "title": "Keep the dispatch scaffold small and reusable",
+        "why_now": "The multi-agent loop exists, but the template itself is not under strain.",
+        "success_signals": [
+          "It stays a printer of structure rather than orchestration logic"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Do not expand it into a dispatch system unless the current brief format genuinely breaks",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Use again on the next bounded runner brief"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Intentionally a support tool, not a scheduler or orchestration engine"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "foundry-registry",
+      "name": "foundry-registry",
+      "status": "stable",
+      "lane": "coordination",
+      "horizon": "next",
+      "summary": "Hand-editable inventory of foundry projects with terminal summaries and validation.",
+      "path": "projects/foundry-registry",
+      "current_goal": {
+        "title": "Keep the registry aligned with actual project reality while staying separate from planning",
+        "why_now": "It is now a live machine-room surface, but its value depends on staying believable and narrow.",
+        "success_signals": [
+          "Registry coverage stays green",
+          "Inventory updates happen after meaningful implementation or doctrine shifts",
+          "It does not absorb planning concerns that belong in foundry-planner"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Refresh the registry after meaningful implementation, review, or doctrine shifts",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "Keep the CLI narrow; planning lives in foundry-planner instead",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "parity",
+          "text": "Maintain coherence with foundry-planner without merging their responsibilities",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Run validate whenever project directories change"
+        ],
+        "notes": [
+          "The registry should reflect settled decisions and current pressure, not automation fantasy."
+        ]
+      },
+      "context": [
+        "Answers what exists",
+        "Complements rather than overlaps with the planner"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "intake-triage",
+      "name": "intake-triage",
+      "status": "stable",
+      "lane": "workflow",
+      "horizon": "later",
+      "summary": "Local triage helper for intake data and sample routing decisions.",
+      "path": "projects/intake-triage",
+      "current_goal": {
+        "title": "Leave it available as a bounded utility unless a new intake workflow revives pressure",
+        "why_now": "No current note trail suggests urgent pressure here, so it should remain modest and ready.",
+        "success_signals": [
+          "The tool remains understandable and usable when needed",
+          "No speculative expansion happens without real intake pressure"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Revisit only if a real intake workflow needs new routing or summary behavior",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Exercise the sample flow if intake work returns to the foreground"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Currently a quiet utility rather than a center-of-gravity project"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "orbit-map",
+      "name": "orbit-map",
+      "status": "stable",
+      "lane": "diagnostic",
+      "horizon": "later",
+      "summary": "Maps conceptual gravity across indexed artifacts using text-first cluster and connection views.",
+      "path": "projects/orbit-map",
+      "current_goal": {
+        "title": "Keep it quiet unless a real conceptual-topology review need appears",
+        "why_now": "It is interesting, but continuity infrastructure still outranks it for practical pressure.",
+        "success_signals": [
+          "If revisited, it stays text-first rather than drifting toward a graph UI"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Leave it alone unless archive navigation or conceptual topology becomes a live need",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Re-run if the Workbench index changes enough to alter tag centers"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Fits the diagnostic/visual track but is not on the current pressure line"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "postsmith",
+      "name": "postsmith",
+      "status": "stable",
+      "lane": "support",
+      "horizon": "next",
+      "summary": "Scaffolds and validates blog posts/pages so foundry tools can hand work into the writing archive cleanly.",
+      "path": "projects/postsmith",
+      "current_goal": {
+        "title": "Keep the scaffold layer boring and compatible with the current blog layout",
+        "why_now": "Several workflows assume a reliable handoff layer exists, but it is not the current frontier.",
+        "success_signals": [
+          "Promotion workflows continue to hand off cleanly",
+          "Blog layout changes do not silently break scaffolding"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Leave it mostly alone unless promotion workflows expose a concrete gap",
+          "owner": "main",
+          "state": "watch"
+        },
+        {
+          "text": "Keep compatibility with the blog layout explicit if the blog evolves",
+          "owner": "main",
+          "state": "queued"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "parity",
+          "text": "Stay in lockstep with any meaningful blog structure changes",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "needs-targeted-pass",
+        "needs": [
+          "Smoke-test scaffolding when the next real artifact is promoted to the blog"
+        ],
+        "notes": [
+          "Reliability matters more than feature expansion here."
+        ]
+      },
+      "context": [
+        "Foundation project rather than the current frontier"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "resurfacer",
+      "name": "resurfacer",
+      "status": "stable",
+      "lane": "workflow",
+      "horizon": "later",
+      "summary": "Surfaces older artifacts from the blog and foundry so recurrence stays visible with small inspectable heuristics.",
+      "path": "projects/resurfacer",
+      "current_goal": {
+        "title": "Leave it sitting quietly unless archive growth or recurrence practice reveals one clear tuning need",
+        "why_now": "It already does the core job and does not need to absorb the broader recurrence experiment.",
+        "success_signals": [
+          "Recurrence remains visible without tool sprawl",
+          "Any later changes come through a bounded plan"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Let it sit unless real archive growth or recurrence usage reveals a concrete tuning need",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Re-run if archive volume or recurrence structures change enough to pressure the heuristics"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Part of the continuity ecosystem without being the current bottleneck"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "situation-board",
+      "name": "situation-board",
+      "status": "stable",
+      "lane": "coordination",
+      "horizon": "later",
+      "summary": "Generates a compact markdown board from manually declared situation note files.",
+      "path": "projects/situation-board",
+      "current_goal": {
+        "title": "Keep it as a lightweight declared-input board rather than a passive tracking system",
+        "why_now": "It already serves a narrow purpose and should stay modest.",
+        "success_signals": [
+          "Manual note inputs remain the source of truth",
+          "The tool does not drift toward inference or surveillance"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use it when a simple note-driven board is enough; otherwise leave it alone",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Run after any changes to the note-file conventions"
+        ],
+        "notes": []
+      },
+      "context": [
+        "A different surface from foundry-planner: declared situation notes rather than project planning"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "transcript-review-note-generator",
+      "name": "transcript-review-note-generator",
+      "status": "stable",
+      "lane": "support",
+      "horizon": "later",
+      "summary": "Generates review notes from transcripts and sample inputs.",
+      "path": "projects/transcript-review-note-generator",
+      "current_goal": {
+        "title": "Keep it available as a bounded transcript utility without widening scope",
+        "why_now": "It does not appear on the current pressure line, so the right move is restraint.",
+        "success_signals": [
+          "The tool remains usable when needed",
+          "No speculative feature growth happens without a transcript-driven need"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Revisit only if transcript review becomes a live workflow again",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [],
+      "testing": {
+        "state": "covered-enough",
+        "needs": [
+          "Exercise the included samples if transcript review work returns"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Currently a quiet support tool rather than an active foundry focus"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "artifact-pressure-engine",
+      "name": "artifact-pressure-engine",
+      "status": "planned",
+      "lane": "weird",
+      "horizon": "later",
+      "summary": "Potential future pressure-reading surface for artifact/recurrence signals, if it earns existence through bounded demand.",
+      "path": "",
+      "current_goal": {
+        "title": "Keep the idea warm without implementing it before the current continuity and drift surfaces teach what is actually needed",
+        "why_now": "It is explicitly named in notes as something that can wait; the planner should still be able to hold future projects visibly.",
+        "success_signals": [
+          "The idea remains visible without stealing focus",
+          "Any eventual brief is bounded and inspectable rather than ontology machinery"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Leave it parked until drift/review/recurrence practice exposes a concrete pressure signal worth tooling",
+          "owner": "main",
+          "state": "queued"
+        },
+        {
+          "text": "If revived later, write a narrow design brief before creating a project directory",
+          "owner": "main",
+          "state": "queued"
+        }
+      ],
+      "blocked": [
+        {
+          "text": "There is not yet enough lived evidence for what this should actually do",
+          "blocking_on": "More real use of Workbench, drift-extractor, drift-review, and recurrence notes",
+          "state": "waiting"
+        }
+      ],
+      "requests": [
+        {
+          "type": "policy",
+          "text": "Do not let this become a generalized ontology machine or hidden scoring system",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "not-started",
+        "needs": [
+          "Decide what one real validation pass would even mean before building anything"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Explicitly named in planning notes as something that can wait"
+      ],
+      "updated_at": "2026-03-12"
+    },
+    {
+      "slug": "recurrence-ledger",
+      "name": "recurrence-ledger",
+      "status": "planned",
+      "lane": "weird",
+      "horizon": "next",
+      "summary": "Potential small project for one chosen recurrence structure if the note-level experiment earns a tool form later.",
+      "path": "",
+      "current_goal": {
+        "title": "Hold the recurrence experiment as a future candidate without hardening it too early",
+        "why_now": "Creative recurrence structures are active in notes, but the current guidance is to pilot them first rather than jump straight to tooling.",
+        "success_signals": [
+          "One real recurrence structure gets tested in notes first",
+          "If tooling is eventually needed, it stays text-first and bounded"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Pilot one recurrence structure on a real subject in notes before deciding whether a dedicated project exists",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "Only create a directory if lived use shows the note structure wants a helper rather than more prose discipline",
+          "owner": "main",
+          "state": "queued"
+        }
+      ],
+      "blocked": [
+        {
+          "text": "It should not become a system before the live note experiment proves the shape",
+          "blocking_on": "A real recurrence note pilot and evidence of repeated manual friction",
+          "state": "waiting"
+        }
+      ],
+      "requests": [
+        {
+          "type": "policy",
+          "text": "Keep the recurrence line fertile without over-systematizing it too early",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "not-started",
+        "needs": [
+          "Finish at least one live recurrence note experiment before any tool validation"
+        ],
+        "notes": []
+      },
+      "context": [
+        "Future-project placeholder derived from creative recurrence planning notes"
+      ],
+      "updated_at": "2026-03-12"
+    }
+  ]
+}
