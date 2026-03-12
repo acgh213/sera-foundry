@@ -15,7 +15,7 @@
       "summary": "Continuity center for capture, review, digest, query, and promotion across the foundry/archive boundary.",
       "path": "projects/workbench",
       "current_goal": {
-        "title": "Tighten the residue → queue → artifact path without turning Workbench into management sludge",
+        "title": "Tighten the residue \u2192 queue \u2192 artifact path without turning Workbench into management sludge",
         "why_now": "It remains the center of gravity and several nearby tools depend on it staying legible in ordinary use.",
         "success_signals": [
           "Promotion queue hygiene feels clean in real use",
@@ -25,9 +25,14 @@
       },
       "next_steps": [
         {
-          "text": "Do one bounded promotion-queue cleanup slice: list/filter defaults, failed/cancelled handling, and archive/reset semantics",
-          "owner": "runner",
+          "owner": "main",
+          "text": "Use the refined queue workflow in ordinary review/promotion work and note any remaining friction",
           "state": "ready"
+        },
+        {
+          "text": "Promotion-queue cleanup slice landed: active/history views and reset semantics are now clearer",
+          "owner": "runner",
+          "state": "done"
         },
         {
           "text": "Use memory-promotion practice during ordinary sessions and note where the workflow still feels rough",
@@ -45,7 +50,7 @@
         {
           "type": "workflow",
           "text": "Clearer queue behavior for failed/cancelled/executed items",
-          "state": "open"
+          "state": "done"
         },
         {
           "type": "feature",
@@ -56,16 +61,18 @@
       "testing": {
         "state": "needs-live-use",
         "needs": [
-          "Run real residue → review → promotion passes and see whether queue cleanup actually reduces friction",
+          "Run real residue \u2192 review \u2192 promotion passes and see whether queue cleanup actually reduces friction",
           "Check that new defaults stay legible on non-happy-path queue states"
         ],
         "notes": [
-          "The right test here is lived workflow, not synthetic coverage theater."
+          "The right test here is lived workflow, not synthetic coverage theater.",
+          "After the queue workflow refinement, verify the new active/history/reset semantics in ordinary use."
         ]
       },
       "context": [
         "Still the continuity center of the current foundry",
-        "Artifact-health, capture-audit, orbit-map, and resurfacer still lean on Workbench state"
+        "Artifact-health, capture-audit, orbit-map, and resurfacer still lean on Workbench state",
+        "Promotion queue active/history/reset semantics were tightened in the latest queue workflow slice"
       ],
       "updated_at": "2026-03-12"
     },
@@ -118,7 +125,7 @@
         },
         {
           "type": "parity",
-          "text": "Top 1–3 results should feel meaningfully stronger than the rest rather than flat",
+          "text": "Top 1\u20133 results should feel meaningfully stronger than the rest rather than flat",
           "state": "open"
         }
       ],
