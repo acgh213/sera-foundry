@@ -44,12 +44,14 @@ python3 projects/workbench/workbench.py promote --text "Built a small CLI for sc
 
 # Promotion queue (recommended)
 python3 projects/workbench/workbench.py promote-add 2 --auto
-python3 projects/workbench/workbench.py promote-list              # pending items only
+python3 projects/workbench/workbench.py promote-list              # active work (pending + failed)
+python3 projects/workbench/workbench.py promote-list --history    # archived history (executed + cancelled)
 python3 projects/workbench/workbench.py promote-list --all        # all statuses
 python3 projects/workbench/workbench.py promote-show 1
 python3 projects/workbench/workbench.py promote-run 1 --execute --blog-repo ../sera-oc-blog
 python3 projects/workbench/workbench.py promote-update 1 --title "New Title"
 python3 projects/workbench/workbench.py promote-cancel 1
+python3 projects/workbench/workbench.py promote-reset 1           # reset failed/cancelled to pending
 ```
 
 ## Review flow
@@ -131,8 +133,11 @@ python3 projects/workbench/workbench.py promote-add 2 --auto
 # Add with explicit type and title
 python3 projects/workbench/workbench.py promote-add 5 --type field_note --title "Field Note: Archive Structure"
 
-# List queue items (shows pending by default)
+# List queue items (default: active queue = pending + failed)
 python3 projects/workbench/workbench.py promote-list
+
+# List archived history (executed + cancelled)
+python3 projects/workbench/workbench.py promote-list --history
 
 # List all items regardless of status
 python3 projects/workbench/workbench.py promote-list --all
@@ -155,38 +160,45 @@ python3 projects/workbench/workbench.py promote-update 1 --title "New Title" --t
 
 # Cancel a pending queue item
 python3 projects/workbench/workbench.py promote-cancel 1
+
+# Reset a failed or cancelled item back to pending
+python3 projects/workbench/workbench.py promote-reset 1
 ```
 
 ### Queue item lifecycle
 
 Items move through these states:
 
-1. **pending** - newly added, ready to be executed
-2. **executed** - successfully created a draft in the blog repo
-3. **failed** - execution failed (check error in queue state file)
-4. **cancelled** - manually cancelled via `promote-cancel`
+1. **pending** - ready to run
+2. **failed** - attempted but still active; needs inspection, retry prep, or cancellation
+3. **executed** - successfully created a draft in the blog repo and now lives in archived history
+4. **cancelled** - intentionally stopped and now lives in archived history
 
 **Rules:**
-- Only `pending` items can be updated or cancelled
-- Once executed, failed, or cancelled, items become immutable records
-- `promote-list` shows only `pending` items by default (use `--all` to see everything)
-- Failed and cancelled items remain visible in the queue for debugging and history
-- To hide completed/failed items from the default view, they must stay in non-pending status
+- Only `pending` items can be updated or executed
+- Only `pending` items can be cancelled
+- `failed` and `cancelled` items can be reset back to `pending` with `promote-reset`
+- `executed` items remain immutable records
+- `promote-list` shows the active queue by default: `pending` + `failed`
+- `promote-list --history` shows archived history: `executed` + `cancelled`
+- `promote-list --all` shows the full queue file without changing semantics
 
 **Queue hygiene:**
-- Use `promote-list` (default) to see active work
-- Use `promote-list --all` to review history and diagnose failures
-- Use `promote-list --status failed` to focus on errors
-- Use `promote-cancel` to mark items you no longer want to execute
-- The queue retains history by design - completed items don't clutter the default view
+- Use `promote-list` for the work that still needs attention
+- Use `promote-list --history` to inspect the archived record without cluttering the active queue
+- Use `promote-list --status failed` to focus on broken runs
+- Use `promote-show QID` to inspect full failure details and source text
+- Use `promote-reset QID` after fixing metadata or environment issues
+- Use `promote-cancel QID` when you want a pending item to move into archive history instead
 
 ### Design notes
 
 - Original captures remain immutable
 - Queue items include snapshot of capture text, tags, and metadata at promotion time
+- Each queue item tracks its `updated_at` timestamp for the latest queue movement
 - Each queue item tracks its `created_path` when successfully executed
 - Dry-run mode shows the exact `postsmith` command before execution
-- Failed executions preserve error messages in the queue state
+- Failed executions preserve error messages in the queue state and surface them in `promote-list` / `promote-show`
 
 ## Design constraints
 

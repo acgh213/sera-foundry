@@ -24,6 +24,9 @@ VALID_LAYERS = {"internal", "draft", "public"}
 SUGGEST_TYPES = ("fragment", "field_note", "project_log")
 REVIEW_STATES = ("new", "reviewed", "promote", "defer", "dormant")
 QUEUE_STATUSES = ("pending", "executed", "failed", "cancelled")
+ACTIVE_QUEUE_STATUSES = ("pending", "failed")
+ARCHIVED_QUEUE_STATUSES = ("executed", "cancelled")
+RESETTABLE_QUEUE_STATUSES = ("failed", "cancelled")
 POSTSMITH_PATH = Path("projects/postsmith/postsmith.py")
 
 
@@ -201,6 +204,9 @@ def load_promotion_queue() -> dict:
     queue = json.loads(PROMOTION_QUEUE_FILE.read_text(encoding="utf-8"))
     for item in queue.get("items", []):
         item.setdefault("updated_at", item.get("created_at"))
+        item.setdefault("created_path", None)
+        if "error" not in item:
+            item["error"] = item.get("last_error")
     return queue
 
 
@@ -697,6 +703,7 @@ def promote_add(args):
         "privacy": args.privacy,
         "source_text": capture.get("text", ""),
         "created_path": None,
+        "error": None,
     }
 
     queue["items"].append(queue_item)
@@ -708,49 +715,61 @@ def promote_add(args):
     print(PROMOTION_QUEUE_FILE)
 
 
+def sort_queue_items(items: list[dict]) -> list[dict]:
+    return sorted(
+        items,
+        key=lambda item: (
+            parse_timestamp(item.get("updated_at") or item.get("created_at")) or datetime.min.replace(tzinfo=timezone.utc),
+            item["queue_id"],
+        ),
+        reverse=True,
+    )
+
+
+def filter_queue_items(items: list[dict], *, status: str | None, show_all: bool, history: bool) -> tuple[list[dict], str]:
+    if status:
+        return [item for item in items if item["status"] == status], f"status={status}"
+    if show_all:
+        return items, "all statuses"
+    if history:
+        return [item for item in items if item["status"] in ARCHIVED_QUEUE_STATUSES], "archived history (executed, cancelled)"
+    return [item for item in items if item["status"] in ACTIVE_QUEUE_STATUSES], "active queue (pending, failed) [default]"
+
+
 def promote_list(args):
     queue = load_promotion_queue()
-    items = queue.get("items", [])
-
-    # Default to pending items unless --all or explicit --status is given
-    if not args.all and not args.status:
-        items = [item for item in items if item["status"] == "pending"]
-        default_filter = True
-    else:
-        default_filter = False
-        if args.status:
-            items = [item for item in items if item["status"] == args.status]
+    all_items = queue.get("items", [])
+    items, filter_label = filter_queue_items(all_items, status=args.status, show_all=args.all, history=args.history)
+    items = sort_queue_items(items)
 
     print(f"Promotion queue: {len(items)} item(s)")
-    
-    filters = []
-    if default_filter:
-        filters.append("status=pending (default)")
-    elif args.status:
-        filters.append(f"status={args.status}")
-    if args.all:
-        filters.append("all statuses")
-    if filters:
-        print(f"Filter: {', '.join(filters)}")
+    print(f"Filter: {filter_label}")
 
-    # Show status counts for all items (not just filtered)
-    all_items = queue.get("items", [])
     status_counts = Counter(item["status"] for item in all_items)
     if all_items:
         summary = ", ".join(f"{status}={status_counts[status]}" for status in QUEUE_STATUSES if status_counts[status])
         if summary:
             print(f"All statuses: {summary}")
 
+    if not items and all_items and not args.all and not args.status and not args.history:
+        print("No active queue items. Use --history/--archived for executed+cancelled history, or --all for everything.")
+        return
+
     for item in items[: args.limit]:
         tags_str = format_tags(item.get("tags", []))
-        created = format_timestamp(item["created_at"])
+        updated = format_timestamp(item.get("updated_at") or item["created_at"])
         title_clip = clip_text(item["title"], width=60)
         print(
-            f"[Q{item['queue_id']:>3}] C{item['capture_id']:>3} | {item['status']:<9} | {item['type']:<12} | {created} | {item['privacy']}"
+            f"[Q{item['queue_id']:>3}] C{item['capture_id']:>3} | {item['status']:<9} | {item['type']:<12} | {updated} | {item['privacy']}"
         )
         print(f"      {title_clip}")
         if tags_str != "-":
             print(f"      tags: {tags_str}")
+        if item["status"] == "failed" and item.get("error"):
+            error_clip = clip_text(item["error"], width=72)
+            print(f"      error: {error_clip}")
+        if item["status"] == "executed" and item.get("created_path"):
+            print(f"      created: {item['created_path']}")
 
 
 def promote_show(args):
@@ -763,12 +782,16 @@ def promote_show(args):
     print(f"queue_id: {item['queue_id']}")
     print(f"capture_id: {item['capture_id']}")
     print(f"created_at: {item['created_at']}")
+    print(f"updated_at: {item.get('updated_at', '-')}")
     print(f"status: {item['status']}")
     print(f"title: {item['title']}")
     print(f"type: {item['type']}")
     print(f"tags: {format_tags(item.get('tags', []))}")
     print(f"privacy: {item['privacy']}")
-    print(f"created_path: {item['created_path'] or '-'}")
+    print(f"created_path: {item.get('created_path') or '-'}")
+    if item.get("error"):
+        print("error:")
+        print(item["error"])
     print("source_text:")
     print(item.get("source_text", ""))
 
@@ -826,11 +849,13 @@ def promote_run(args):
         item["status"] = "executed"
         item["updated_at"] = now_iso()
         item["created_path"] = created_path
+        item["error"] = None
         result["status"] = "executed"
         result["created_path"] = created_path
     except subprocess.CalledProcessError as e:
         item["status"] = "failed"
         item["updated_at"] = now_iso()
+        item["error"] = e.stderr
         result["status"] = "failed"
         result["error"] = e.stderr
 
@@ -881,6 +906,27 @@ def promote_cancel(args):
     item["updated_at"] = now_iso()
     save_promotion_queue(queue)
     print(f"Cancelled queue item {args.queue_id}")
+    print(PROMOTION_QUEUE_FILE)
+
+
+def promote_reset(args):
+    queue = load_promotion_queue()
+    items = [item for item in queue.get("items", []) if item["queue_id"] == args.queue_id]
+    if not items:
+        raise SystemExit(f"Queue item {args.queue_id} not found")
+
+    item = items[0]
+
+    if item["status"] not in RESETTABLE_QUEUE_STATUSES:
+        allowed = ", ".join(repr(status) for status in RESETTABLE_QUEUE_STATUSES)
+        raise SystemExit(f"Queue item {args.queue_id} has status '{item['status']}' (can only reset {allowed} items)")
+
+    item["status"] = "pending"
+    item["updated_at"] = now_iso()
+    item["error"] = None
+    item["created_path"] = None
+    save_promotion_queue(queue)
+    print(f"Reset queue item {args.queue_id} to pending")
     print(PROMOTION_QUEUE_FILE)
 
 
@@ -963,7 +1009,8 @@ def build_parser():
 
     pl = sub.add_parser("promote-list", help="List promotion queue items.")
     pl.add_argument("--status", choices=QUEUE_STATUSES, help="Filter by status")
-    pl.add_argument("--all", action="store_true", help="Show all statuses (default: pending only)")
+    pl.add_argument("--all", action="store_true", help="Show all queue items")
+    pl.add_argument("--history", "--archived", dest="history", action="store_true", help="Show archived history (executed + cancelled)")
     pl.add_argument("--limit", type=int, default=20, help="Maximum items to display")
     pl.set_defaults(func=promote_list)
 
@@ -989,6 +1036,10 @@ def build_parser():
     pc = sub.add_parser("promote-cancel", help="Cancel a pending queue item.")
     pc.add_argument("queue_id", type=int, help="Queue item ID to cancel")
     pc.set_defaults(func=promote_cancel)
+
+    prt = sub.add_parser("promote-reset", help="Reset a failed or cancelled queue item back to pending.")
+    prt.add_argument("queue_id", type=int, help="Queue item ID to reset")
+    prt.set_defaults(func=promote_reset)
 
     return p
 
