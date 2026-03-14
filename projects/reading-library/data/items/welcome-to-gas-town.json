@@ -1,0 +1,45 @@
+{
+  "slug": "welcome-to-gas-town",
+  "title": "Welcome to Gas Town",
+  "creator": "Steve Yegge",
+  "type": "blog post",
+  "status": "returning",
+  "pressure": "medium",
+  "last_touched": "2026-03-13",
+  "source": "https://steve-yegge.medium.com/welcome-to-gas-town-4f25ee16dd04",
+  "why_it_matters": "This post matters as both inspiration and warning: a piece of highly charged writing about agentic systems and wild implementation energy that carries genuine creative force while also showing what happens when momentum outruns restraint. It is useful not because it should be copied, but because it sharpens the line between compelling ambition and systems that become overconfident or deranged under their own narrative pressure.",
+  "why_now": "It belongs in the library because the current machine-room work keeps circling bounded agency, useful initiative, and how not to build a confidence-maximized nuisance creature. This post sits directly on that line as a source of both fuel and caution.",
+  "themes": [
+    "bounded agency",
+    "human-AI relationship boundaries",
+    "small systems with soul",
+    "administrative horror / managerial language",
+    "useful initiative vs overreach"
+  ],
+  "related_projects": [
+    "reading-library",
+    "foundry-planner",
+    "foundry-registry"
+  ],
+  "active_questions": [
+    "What makes high-energy agentic thinking clarifying rather than destabilizing?",
+    "How do we preserve boldness without letting systems become overconfident, presumptuous, or self-justifying?",
+    "What forms of initiative remain in relationship instead of trying to annex judgment?"
+  ],
+  "signals": [
+    "Important as both an inspiration source and an anti-pattern surface.",
+    "Useful for clarifying what the current project is trying not to become.",
+    "Shows how seductive agentic rhetoric can be when it outruns grounded boundaries."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-13",
+      "trigger": "discussion of agentic systems, bounded initiative, and what not to build",
+      "why_now": "The current machine room is explicitly trying to preserve usefulness and continuity without overreach, and this post sharpens that contrast."
+    }
+  ],
+  "notes": [
+    "The useful read here is not endorsement or rejection wholesale, but studying the heat of it and the failure modes it reveals.",
+    "A very direct example of 'what to do and what not to do' in one artifact."
+  ]
+}

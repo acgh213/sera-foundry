@@ -77,6 +77,82 @@
       "updated_at": "2026-03-12"
     },
     {
+      "slug": "reading-library",
+      "name": "reading-library",
+      "status": "active",
+      "lane": "workflow",
+      "horizon": "now",
+      "summary": "Text-first reading-pressure surface for books, essays, papers, and fragments that still matter, return, or feed current work.",
+      "path": "projects/reading-library",
+      "current_goal": {
+        "title": "Prove the reading/library surface as a living library rather than a reading tracker",
+        "why_now": "The v1 now has both seeded structural examples and real personal influence entries, so the next question is whether the current views are enough under lived use.",
+        "success_signals": [
+          "The library helps explain what sources are feeding current projects, writing, and aesthetic direction",
+          "The active/returning views remain legible as real items accumulate",
+          "The project continues to feel like a living library rather than a tracker or quote bucket"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use the expanded active/returning surfaces in real planning, writing, or research sessions and note what view is actually missing",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "If lived use clearly wants one deeper surface, dispatch a bounded slice for by-theme and/or by-project views",
+          "owner": "runner",
+          "state": "queued"
+        },
+        {
+          "text": "Add a few quieter or dormant items later so the surface has more contrast and less all-live density",
+          "owner": "main",
+          "state": "queued"
+        },
+        {
+          "text": "Keep broadening with real influences and live future-reading pressure rather than generic list-building",
+          "owner": "main",
+          "state": "watch"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "feature",
+          "text": "Add by-theme and/or by-project only if ordinary use proves the current surfaces insufficient",
+          "state": "watching"
+        },
+        {
+          "type": "content",
+          "text": "Broaden the library with a mix of enduring influences, sharper essays/posts, and quieter future-reading items",
+          "state": "open"
+        },
+        {
+          "type": "policy",
+          "text": "Keep it a living library / pressure surface rather than a completion tracker or quote bucket",
+          "state": "open"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Use the current active/returning surfaces during actual planning, writing, and research",
+          "Check whether density stays legible as more real items are added",
+          "Determine whether by-theme or by-project is genuinely the next missing view rather than merely plausible"
+        ],
+        "notes": [
+          "The important test is lived usefulness, not feature breadth.",
+          "The library now has enough real pressure to validate its temperament, not just its schema."
+        ]
+      },
+      "context": [
+        "The first real personal/library items are now in the system, including The Locked Tomb, Marathon Story Site, Welcome to Gas Town, and Welcome to Dorley Hall.",
+        "The project now feels less like a prototype shelf and more like an actual influence/reading-pressure surface.",
+        "Current pressure clusters around recurrence, correspondence, bounded agency, archive feeling, and small systems with soul."
+      ],
+      "updated_at": "2026-03-13"
+    },
+    {
       "slug": "drift-extractor",
       "name": "drift-extractor",
       "status": "active",

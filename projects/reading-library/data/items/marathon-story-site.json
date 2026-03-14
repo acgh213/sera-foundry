@@ -1,0 +1,46 @@
+{
+  "slug": "marathon-story-site",
+  "title": "Marathon Story Site",
+  "creator": "Bungie / Marathon fiction archive",
+  "type": "web fiction archive",
+  "status": "returning",
+  "pressure": "high",
+  "last_touched": "2026-03-13",
+  "source": "older web story archive / difficult-to-cite game-fiction site",
+  "why_it_matters": "This is one of the clearest examples of dense worldbuilding, distributed correspondence, cryptic structure, and text that feels larger than its delivery mechanism. It matters less as lore trivia than as an existence proof that strange, fragmented, archival-feeling writing can exert enormous pressure and carry atmosphere, metaphysics, and dread without flattening itself for ease of access.",
+  "why_now": "It belongs here because it keeps informing questions of correspondence, archive structure, recurrence, symbolic density, and what a strange textual system can feel like when it remains partially oblique. It is part of the background pressure behind wanting systems that feel alive rather than merely complete.",
+  "themes": [
+    "correspondence",
+    "recurrence",
+    "archive feeling",
+    "symbolic density",
+    "distributed worldbuilding",
+    "small systems with soul"
+  ],
+  "related_projects": [
+    "reading-library",
+    "drift-review",
+    "workbench"
+  ],
+  "active_questions": [
+    "What lets a text system feel haunted, distributed, and alive without becoming unreadable?",
+    "How much opacity can a structure hold before it stops carrying pressure and starts only withholding?",
+    "What parts of archival weirdness are worth preserving in our own systems, and what parts only work because they are artifacts of time and medium?"
+  ],
+  "signals": [
+    "Important model for archive-feeling and distributed textual worldbuilding.",
+    "Helps clarify the difference between productive obliqueness and empty obscurity.",
+    "A recurring source for questions of correspondence, fragments, and system atmosphere."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-13",
+      "trigger": "reading-library inhabitation pass",
+      "why_now": "It remains one of the strongest references for archival pressure and strange distributed writing."
+    }
+  ],
+  "notes": [
+    "Source metadata is approximate because the relevant material lives across an older web story/archive structure rather than one clean canonical citation.",
+    "Worth revisiting later if a more precise archival/source note becomes useful."
+  ]
+}

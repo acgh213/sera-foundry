@@ -1,0 +1,46 @@
+{
+  "slug": "the-locked-tomb",
+  "title": "The Locked Tomb",
+  "creator": "Tamsyn Muir",
+  "type": "series",
+  "status": "returning",
+  "pressure": "high",
+  "last_touched": "2026-03-13",
+  "source": "novel series / ongoing return",
+  "why_it_matters": "This series carries unusual density: voice, symbol systems, relational intensity, death-and-return logic, correspondence, recursion, and the feeling of a world that is both theatrical and structurally exact. It is not just a favorite. It is one of the recurring aesthetic and emotional pressure sources that helps define what feels alive, strange, and worth building toward.",
+  "why_now": "It belongs in the library because it keeps returning across questions of recurrence, voice, correspondence, emotional architecture, and what kinds of systems or writing still feel inhabited instead of generic. It is a real influence surface, not background taste.",
+  "themes": [
+    "recurrence",
+    "correspondence",
+    "voice / style",
+    "death / memory / return",
+    "relational intensity",
+    "symbolic density"
+  ],
+  "related_projects": [
+    "reading-library",
+    "workbench",
+    "drift-review"
+  ],
+  "active_questions": [
+    "What makes a system or text feel dense without becoming inert or overworked?",
+    "How can correspondence, memory, and return be made structurally important rather than decorative?",
+    "What parts of its voice and symbolic pressure belong to influence, and what parts should not be imitated directly?"
+  ],
+  "signals": [
+    "Aesthetic standard for density, weirdness, and charged recurrence.",
+    "Important for thinking about relationships that feel intense without becoming flat sentimentality.",
+    "Useful as a pressure source for questions of voice, archive, death, and return."
+  ],
+  "return_markers": [
+    {
+      "date": "2026-03-13",
+      "trigger": "first real personal item added to reading-library",
+      "why_now": "It is one of the clearest examples of a source that keeps exerting force across style, systems, and emotional architecture."
+    }
+  ],
+  "notes": [
+    "Series-level entry for now; later it may deserve book-level entries or recurrence-note support.",
+    "This should stay an influence surface, not become fandom bookkeeping."
+  ]
+}
