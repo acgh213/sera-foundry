@@ -1,0 +1,418 @@
+#!/usr/bin/env python3
+"""field-notes — local field note archive CLI.
+
+Preserves observations as artifacts: a stack of meaningful fragments,
+not a dashboard, tracker, or evidence factory.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from dataclasses import dataclass
+from datetime import date
+from pathlib import Path
+from typing import Iterable
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ARCHIVE_DIR = PROJECT_ROOT / "archive"
+REQUIRED_FIELDS = ["title", "date", "kind", "status", "pressure"]
+VALID_KINDS = {"observation", "overheard", "scene", "motif", "reflection-fragment"}
+VALID_STATUSES = {"fresh", "returning", "held", "dormant", "promoted"}
+VALID_PRESSURE = {"quiet", "alive", "charged"}
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+SECTION_HEADERS = {"observation", "interpretation", "impact"}
+
+
+@dataclass
+class Note:
+    slug: str
+    path: Path
+    metadata: dict[str, object]
+    body: str
+
+    @property
+    def title(self) -> str:
+        return str(self.metadata.get("title", self.slug))
+
+    @property
+    def note_date(self) -> str:
+        return str(self.metadata.get("date", "") or "")
+
+    @property
+    def tags(self) -> list[str]:
+        raw = self.metadata.get("tags", [])
+        if isinstance(raw, list):
+            return [str(tag) for tag in raw]
+        return []
+
+    @property
+    def returns(self) -> list[str]:
+        raw = self.metadata.get("returns", [])
+        if isinstance(raw, list):
+            return [str(item) for item in raw]
+        return []
+
+
+def parse_scalar(raw: str) -> object:
+    value = raw.strip()
+    if value == "":
+        return ""
+    if value.startswith("[") and value.endswith("]"):
+        inner = value[1:-1].strip()
+        if not inner:
+            return []
+        return [part.strip().strip('"\'') for part in inner.split(",") if part.strip()]
+    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+        return value[1:-1]
+    return value
+
+
+def parse_frontmatter(text: str) -> tuple[dict[str, object], str]:
+    if not text.startswith("---\n"):
+        return {}, text.strip()
+
+    lines = text.splitlines()
+    metadata: dict[str, object] = {}
+    body_start = None
+
+    for index, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            body_start = index + 1
+            break
+        if not line.strip() or ":" not in line:
+            continue
+        key, raw = line.split(":", 1)
+        metadata[key.strip()] = parse_scalar(raw)
+
+    if body_start is None:
+        return {}, text.strip()
+
+    body = "\n".join(lines[body_start:]).strip()
+    return metadata, body
+
+
+def load_note(path: Path) -> Note:
+    metadata, body = parse_frontmatter(path.read_text(encoding="utf-8"))
+    return Note(slug=path.stem, path=path, metadata=metadata, body=body)
+
+
+def iter_notes() -> Iterable[Note]:
+    if not ARCHIVE_DIR.exists():
+        return []
+    notes = [load_note(path) for path in sorted(ARCHIVE_DIR.glob("*.md"))]
+    return sorted(notes, key=lambda note: (note.note_date, note.slug), reverse=True)
+
+
+def render_table(rows: list[list[str]]) -> None:
+    widths = [max(len(row[index]) for row in rows) for index in range(len(rows[0]))]
+    for row_index, row in enumerate(rows):
+        print("  ".join(cell.ljust(widths[index]) for index, cell in enumerate(row)))
+        if row_index == 0:
+            print("  ".join("-" * width for width in widths))
+
+
+def clip_text(text: str, width: int = 88) -> str:
+    collapsed = " ".join(text.split())
+    if len(collapsed) <= width:
+        return collapsed
+    return collapsed[: width - 1].rstrip() + "…"
+
+
+def split_sections(body: str) -> dict[str, str]:
+    sections: dict[str, list[str]] = {}
+    current = None
+
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("## "):
+            header = stripped[3:].strip().lower()
+            if header in SECTION_HEADERS:
+                current = header
+                sections.setdefault(current, [])
+                continue
+        if current is not None:
+            sections.setdefault(current, []).append(line)
+
+    return {key: "\n".join(value).strip() for key, value in sections.items()}
+
+
+def observation_excerpt(note: Note, width: int = 78) -> str:
+    sections = split_sections(note.body)
+    text = sections.get("observation") or note.body
+    return clip_text(text, width=width)
+
+
+def find_note(slug: str) -> Note:
+    path = ARCHIVE_DIR / f"{slug}.md"
+    if not path.exists():
+        raise SystemExit(f"Note not found: {slug}")
+    return load_note(path)
+
+
+def cmd_list(_: list[str]) -> int:
+    notes = list(iter_notes())
+    if not notes:
+        print("No field notes found.")
+        return 0
+
+    rows = [["DATE", "KIND", "STATUS", "PRESSURE", "TAGS", "TITLE", "SLUG"]]
+    for note in notes:
+        rows.append([
+            note.note_date[:10],
+            str(note.metadata.get("kind", "")),
+            str(note.metadata.get("status", "")),
+            str(note.metadata.get("pressure", "")),
+            ", ".join(note.tags[:3]) if note.tags else "-",
+            note.title,
+            note.slug,
+        ])
+    render_table(rows)
+    print(f"\n{len(notes)} note(s) in archive.")
+    return 0
+
+
+def cmd_show(args: list[str]) -> int:
+    if not args:
+        print("Usage: field-notes show <slug>", file=sys.stderr)
+        return 1
+
+    note = find_note(args[0])
+    meta = note.metadata
+    print(f"Title:      {note.title}")
+    print(f"Date:       {meta.get('date', '')}")
+    print(f"Kind:       {meta.get('kind', '')}")
+    print(f"Status:     {meta.get('status', '')}")
+    print(f"Pressure:   {meta.get('pressure', '')}")
+    if meta.get("place"):
+        print(f"Place:      {meta.get('place', '')}")
+    if meta.get("context"):
+        print(f"Context:    {meta.get('context', '')}")
+    if note.tags:
+        print(f"Tags:       {', '.join(note.tags)}")
+    if note.returns:
+        print(f"Returns:    {', '.join(note.returns)}")
+    print(f"File:       {note.path.relative_to(PROJECT_ROOT)}")
+    print("\n---\n")
+    print(note.body)
+    return 0
+
+
+def cmd_recent(args: list[str]) -> int:
+    limit = 5
+    if args:
+        try:
+            limit = max(1, int(args[0]))
+        except ValueError:
+            print("Usage: field-notes recent [count]", file=sys.stderr)
+            return 1
+
+    notes = list(iter_notes())[:limit]
+    if not notes:
+        print("No field notes found.")
+        return 0
+
+    print(f"Recent field notes ({len(notes)})")
+    print("=" * 22)
+    print()
+    for note in notes:
+        print(f"- {note.note_date[:10]} | {note.title}")
+        print(f"  kind: {note.metadata.get('kind', '')} | pressure: {note.metadata.get('pressure', '')} | tags: {', '.join(note.tags) if note.tags else '-'}")
+        print(f"  {observation_excerpt(note)}")
+        print()
+    return 0
+
+
+def cmd_returning(_: list[str]) -> int:
+    notes = [
+        note
+        for note in iter_notes()
+        if note.returns or str(note.metadata.get("status", "")) == "returning"
+    ]
+    if not notes:
+        print("No notes currently marked as returning.")
+        return 0
+
+    notes = sorted(
+        notes,
+        key=lambda note: (len(note.returns), note.note_date, note.slug),
+        reverse=True,
+    )
+
+    print("Returning notes")
+    print("===============")
+    print()
+    for note in notes:
+        last_return = note.returns[-1] if note.returns else "-"
+        print(f"- {note.title}")
+        print(f"  date:         {note.note_date[:10]}")
+        print(f"  status:       {note.metadata.get('status', '')}")
+        print(f"  returns:      {len(note.returns)} marker(s); last return {last_return}")
+        print(f"  tags:         {', '.join(note.tags) if note.tags else '-'}")
+        print(f"  observation:  {observation_excerpt(note, width=70)}")
+        print(f"  slug:         {note.slug}")
+        print()
+    return 0
+
+
+def cmd_by_tag(args: list[str]) -> int:
+    if not args:
+        print("Usage: field-notes by-tag <tag>", file=sys.stderr)
+        return 1
+
+    wanted = args[0].strip().lower()
+    matches = [note for note in iter_notes() if any(tag.lower() == wanted for tag in note.tags)]
+    if not matches:
+        print(f"No notes found for tag: {args[0]}")
+        return 0
+
+    print(f"Notes tagged '{args[0]}' ({len(matches)})")
+    print("=" * (len(args[0]) + 18))
+    print()
+    for note in matches:
+        print(f"- {note.note_date[:10]} | {note.title}")
+        print(f"  kind: {note.metadata.get('kind', '')} | status: {note.metadata.get('status', '')} | pressure: {note.metadata.get('pressure', '')}")
+        print(f"  {observation_excerpt(note)}")
+        print(f"  slug: {note.slug}")
+        print()
+    return 0
+
+
+def cmd_template(_: list[str]) -> int:
+    print(
+        "---\n"
+        "title: \n"
+        f"date: {date.today().isoformat()}\n"
+        "kind: observation\n"
+        "status: fresh\n"
+        "pressure: alive\n"
+        "place: \n"
+        "context: \n"
+        "tags: []\n"
+        "returns: []\n"
+        "---\n\n"
+        "## Observation\n\n"
+        "What was noticed, heard, or encountered. Stay close to the thing itself.\n\n"
+        "## Interpretation\n\n"
+        "Optional. What it might mean, if anything. Leave blank if it is too early.\n\n"
+        "## Impact\n\n"
+        "Optional. What changed, lingered, or became harder/easier after the moment.\n"
+    )
+    return 0
+
+
+def cmd_validate(_: list[str]) -> int:
+    notes = list(iter_notes())
+    if not notes:
+        print("No notes to validate.")
+        return 0
+
+    note_by_slug = {note.slug: note for note in notes}
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    for note in notes:
+        meta = note.metadata
+        for field in REQUIRED_FIELDS:
+            if not str(meta.get(field, "")).strip():
+                errors.append(f"{note.slug}: missing required field '{field}'")
+
+        kind = str(meta.get("kind", ""))
+        if kind and kind not in VALID_KINDS:
+            warnings.append(f"{note.slug}: unknown kind '{kind}'")
+
+        status = str(meta.get("status", ""))
+        if status and status not in VALID_STATUSES:
+            warnings.append(f"{note.slug}: unknown status '{status}'")
+
+        pressure = str(meta.get("pressure", ""))
+        if pressure and pressure not in VALID_PRESSURE:
+            warnings.append(f"{note.slug}: unknown pressure '{pressure}'")
+
+        note_date = str(meta.get("date", ""))
+        if note_date and not DATE_RE.match(note_date[:10]):
+            errors.append(f"{note.slug}: date must look like YYYY-MM-DD")
+
+        for index, return_marker in enumerate(note.returns, start=1):
+            if not DATE_RE.match(return_marker[:10]):
+                errors.append(f"{note.slug}: returns[{index}] must look like YYYY-MM-DD")
+
+        sections = split_sections(note.body)
+        if not note.body.strip():
+            errors.append(f"{note.slug}: body is empty")
+        elif not sections.get("observation", "").strip():
+            errors.append(f"{note.slug}: missing or empty 'Observation' section")
+
+        if status == "returning" and not note.returns:
+            warnings.append(f"{note.slug}: status is 'returning' but no return markers are recorded")
+
+        if len(set(tag.lower() for tag in note.tags)) != len(note.tags):
+            warnings.append(f"{note.slug}: duplicate tags present")
+
+        if note.slug not in note_by_slug:
+            warnings.append(f"{note.slug}: internal lookup mismatch")
+
+    if errors:
+        print("Errors")
+        print("======")
+        for error in errors:
+            print(f"- {error}")
+        print()
+
+    if warnings:
+        print("Warnings")
+        print("========")
+        for warning in warnings:
+            print(f"- {warning}")
+        print()
+
+    print(f"Validated {len(notes)} note(s): {len(errors)} error(s), {len(warnings)} warning(s).")
+    return 1 if errors else 0
+
+
+def print_usage() -> None:
+    print(
+        "field-notes — local field note archive\n\n"
+        "Usage:\n"
+        "  field-notes list\n"
+        "  field-notes show <slug>\n"
+        "  field-notes recent [count]\n"
+        "  field-notes returning\n"
+        "  field-notes by-tag <tag>\n"
+        "  field-notes template\n"
+        "  field-notes validate\n\n"
+        "This preserves observations as observations.\n"
+        "It should feel like a stack of fragments, not a monitoring system."
+    )
+
+
+def main(argv: list[str]) -> int:
+    commands = {
+        "list": cmd_list,
+        "show": cmd_show,
+        "recent": cmd_recent,
+        "returning": cmd_returning,
+        "by-tag": cmd_by_tag,
+        "template": cmd_template,
+        "validate": cmd_validate,
+    }
+
+    if len(argv) < 2 or argv[1] in {"-h", "--help", "help"}:
+        print_usage()
+        return 0
+
+    command = argv[1]
+    handler = commands.get(command)
+    if handler is None:
+        print(f"Unknown command: {command}", file=sys.stderr)
+        print_usage()
+        return 1
+
+    try:
+        return handler(argv[2:])
+    except BrokenPipeError:
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

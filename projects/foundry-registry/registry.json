@@ -1,11 +1,12 @@
 {
-  "reviewed_at": "2026-03-10",
+  "reviewed_at": "2026-03-14",
   "notes": [
     "This registry is hand-maintained and intentionally opinionated.",
     "Status and pressure are review judgments, not automatic scores.",
     "The current center of gravity is continuity/workflow first, then weird/generative deepening.",
     "Refresh it after meaningful implementation or doctrine shifts so the machine-room view stays trustworthy.",
-    "drift-review now gives extracted drift its own bounded review surface, keeping the weird line inspectable without bloating extraction."
+    "drift-review now gives extracted drift its own bounded review surface, keeping the weird line inspectable without bloating extraction.",
+    "field-notes now gives lived observation, atmosphere, and recurring motifs their own bounded archive surface instead of dissolving them into general notes."
   ],
   "projects": [
     {
@@ -370,6 +371,76 @@
         "Returning sources are tracked through explicit return markers rather than hidden scoring."
       ],
       "last_reviewed": "2026-03-12"
+    },
+    {
+      "name": "correspondence-archive",
+      "path": "projects/correspondence-archive",
+      "what_it_does": "Holds addressed thought over time as durable correspondence artifacts, preserving exchange, threading, chronology, and unresolved pressure.",
+      "status": "active",
+      "pressure": "high",
+      "dependencies": [],
+      "notes": [
+        "This is Phase A's lead project\u2014opening genuinely new territory while staying adjacent to current work.",
+        "One markdown file per item preserves artifact quality and makes correspondence feel like a drawer of letters rather than database records.",
+        "The system is intentionally local-first and text-first with no send mechanism\u2014it preserves addressed exchange as archive, not as transmission protocol.",
+        "Success depends on whether it feels distinct from notes and chat while creating useful thread/unresolved views."
+      ],
+      "next_actions": [
+        "Use it for real correspondence and see whether the current shape feels alive.",
+        "Only deepen if lived use reveals concrete missing moves\u2014project/theme linkage, return markers, or richer thread navigation.",
+        "Keep the archival feel strong; do not let it become inbox sludge or pseudo-intimacy infrastructure."
+      ],
+      "signals": [
+        "This addresses the missing layer identified in Phase A planning: durable addressed exchange that is neither prompt scroll nor public essay.",
+        "The v1 scope is deliberately bounded\u2014smallest coherent implementation that tests whether correspondence deserves its own room."
+      ],
+      "last_reviewed": "2026-03-14"
+    },
+    {
+      "name": "field-notes",
+      "path": "projects/field-notes",
+      "what_it_does": "Keeps a local archive of field notes as individual artifacts, with recent, returning, and by-tag views for lived observation and subtle recurring texture.",
+      "status": "active",
+      "pressure": "high",
+      "dependencies": [],
+      "notes": [
+        "This gives overheard lines, social weather, scenes, motifs, and charged fragments their own room rather than flattening them into notes or projects.",
+        "One markdown file per note preserves artifact feel and makes chronology, ambiguity, and recurrence hand-editable.",
+        "Returning is explicit via manual return markers rather than hidden inference or mood analytics."
+      ],
+      "next_actions": [
+        "Use it on real field notes and see whether the archive still feels alive after more than the seed set.",
+        "Only add deeper surfaces if lived use clearly wants one bounded move beyond recent/returning/by-tag.",
+        "Protect the project from drifting toward monitoring, journaling-by-force, or generic capture sludge."
+      ],
+      "signals": [
+        "The project directly widens the archive into lived observation and atmospheric residue, pairing with the institutional-temperature memo without becoming surveillance infrastructure.",
+        "Its first bounded slice is now real: archive artifacts plus list/show/recent/returning/by-tag/template/validate."
+      ],
+      "last_reviewed": "2026-03-14"
+    },
+    {
+      "name": "voice-style-workshop",
+      "path": "projects/voice-style-workshop",
+      "what_it_does": "Keeps a local archive of charged style fragments, making returning lines, tonal moves, structural gestures, and source-linked pressure legible without turning style into rules.",
+      "status": "active",
+      "pressure": "high",
+      "dependencies": [],
+      "notes": [
+        "This gives sentence pressure and structural recurrence their own room rather than dissolving them into drafts, notes, or reading traces.",
+        "One markdown file per fragment preserves artifact feel and keeps judgments about aliveness, return, and caution visible by hand.",
+        "The seed set includes a deliberate anti-pattern fragment so the workshop can hold restraint as well as admiration."
+      ],
+      "next_actions": [
+        "Use it on real fragments and see whether the current fragment/returning/tag/source surfaces stay alive after more than the seed set.",
+        "Only add style-note or pattern surfaces after enough real fragments accumulate to justify another bounded slice.",
+        "Protect it from drifting into quote-hoarding, coaching doctrine, or scorekeeping."
+      ],
+      "signals": [
+        "This is the first bounded implementation of the voice/style workshop plan: fragment archive plus returning, by-tag, and by-source views.",
+        "It directly applies the small-systems-with-soul stance by staying local, inspectable, constrained, textured, and human-scale."
+      ],
+      "last_reviewed": "2026-03-14"
     }
   ]
 }

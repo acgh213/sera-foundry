@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+"""correspondence — local correspondence archive CLI.
+
+This project preserves addressed asynchronous exchange as artifact.
+It is not chat, not inbox software, and not pseudo-email.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from dataclasses import dataclass
+from datetime import date
+from pathlib import Path
+from typing import Iterable
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ARCHIVE_DIR = PROJECT_ROOT / "archive"
+REQUIRED_FIELDS = ["subject", "from", "to", "date", "kind", "status"]
+VALID_KINDS = {"letter", "reply", "note", "memo"}
+VALID_STATUSES = {"draft", "sent", "needs-reply", "held", "archived"}
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+@dataclass
+class Item:
+    slug: str
+    path: Path
+    metadata: dict[str, object]
+    body: str
+
+    @property
+    def subject(self) -> str:
+        return str(self.metadata.get("subject", self.slug))
+
+    @property
+    def thread_id(self) -> str:
+        return str(self.metadata.get("thread_id", "") or "")
+
+    @property
+    def reply_to(self) -> str:
+        return str(self.metadata.get("reply_to", "") or "")
+
+    @property
+    def item_date(self) -> str:
+        return str(self.metadata.get("date", "") or "")
+
+
+def parse_scalar(raw: str) -> object:
+    value = raw.strip()
+    if value == "":
+        return ""
+    if value.startswith("[") and value.endswith("]"):
+        inner = value[1:-1].strip()
+        if not inner:
+            return []
+        return [part.strip().strip('"\'') for part in inner.split(",") if part.strip()]
+    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+        return value[1:-1]
+    return value
+
+
+def parse_frontmatter(text: str) -> tuple[dict[str, object], str]:
+    if not text.startswith("---\n"):
+        return {}, text.strip()
+
+    lines = text.splitlines()
+    metadata: dict[str, object] = {}
+    body_start = None
+
+    for index, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            body_start = index + 1
+            break
+        if not line.strip() or ":" not in line:
+            continue
+        key, raw = line.split(":", 1)
+        metadata[key.strip()] = parse_scalar(raw)
+
+    if body_start is None:
+        return {}, text.strip()
+
+    body = "\n".join(lines[body_start:]).strip()
+    return metadata, body
+
+
+def load_item(path: Path) -> Item:
+    metadata, body = parse_frontmatter(path.read_text(encoding="utf-8"))
+    return Item(slug=path.stem, path=path, metadata=metadata, body=body)
+
+
+def iter_items() -> Iterable[Item]:
+    if not ARCHIVE_DIR.exists():
+        return []
+    items = [load_item(path) for path in sorted(ARCHIVE_DIR.glob("*.md"))]
+    return sorted(items, key=lambda item: (item.item_date, item.slug), reverse=True)
+
+
+def gap_days(previous_date: str, current_date: str) -> str:
+    if not previous_date or not current_date:
+        return ""
+    try:
+        previous = date.fromisoformat(previous_date[:10])
+        current = date.fromisoformat(current_date[:10])
+    except ValueError:
+        return ""
+    delta = (current - previous).days
+    if delta <= 0:
+        return ""
+    label = "day" if delta == 1 else "days"
+    return f" ({delta} {label} later)"
+
+
+def render_table(rows: list[list[str]]) -> None:
+    widths = [max(len(row[index]) for row in rows) for index in range(len(rows[0]))]
+    for row_index, row in enumerate(rows):
+        print("  ".join(cell.ljust(widths[index]) for index, cell in enumerate(row)))
+        if row_index == 0:
+            print("  ".join("-" * width for width in widths))
+
+
+def cmd_list(_: list[str]) -> int:
+    items = list(iter_items())
+    if not items:
+        print("No correspondence items found.")
+        return 0
+
+    rows = [["DATE", "FROM", "TO", "KIND", "STATUS", "SUBJECT", "SLUG"]]
+    for item in items:
+        meta = item.metadata
+        rows.append([
+            str(meta.get("date", ""))[:10],
+            str(meta.get("from", "")),
+            str(meta.get("to", "")),
+            str(meta.get("kind", "")),
+            str(meta.get("status", "")),
+            item.subject,
+            item.slug,
+        ])
+    render_table(rows)
+    print(f"\n{len(items)} item(s) in archive.")
+    return 0
+
+
+def cmd_show(args: list[str]) -> int:
+    if not args:
+        print("Usage: correspondence show <slug>", file=sys.stderr)
+        return 1
+
+    path = ARCHIVE_DIR / f"{args[0]}.md"
+    if not path.exists():
+        print(f"Item not found: {args[0]}", file=sys.stderr)
+        return 1
+
+    item = load_item(path)
+    meta = item.metadata
+    print(f"Subject:   {item.subject}")
+    print(f"From:      {meta.get('from', '')}")
+    print(f"To:        {meta.get('to', '')}")
+    print(f"Date:      {meta.get('date', '')}")
+    print(f"Kind:      {meta.get('kind', '')}")
+    print(f"Status:    {meta.get('status', '')}")
+    if item.thread_id:
+        print(f"Thread:    {item.thread_id}")
+    if item.reply_to:
+        print(f"Reply-to:  {item.reply_to}")
+    tags = item.metadata.get("tags", [])
+    if isinstance(tags, list) and tags:
+        print(f"Tags:      {', '.join(str(tag) for tag in tags)}")
+    print(f"File:      {item.path.relative_to(PROJECT_ROOT)}")
+    print("\n---\n")
+    print(item.body)
+    return 0
+
+
+def cmd_thread(args: list[str]) -> int:
+    if not args:
+        print("Usage: correspondence thread <thread-id>", file=sys.stderr)
+        return 1
+
+    thread_id = args[0]
+    thread_items = [item for item in iter_items() if item.thread_id == thread_id]
+    if not thread_items:
+        print(f"No items found in thread: {thread_id}", file=sys.stderr)
+        return 1
+
+    thread_items = sorted(thread_items, key=lambda item: (item.item_date, item.slug))
+    participants = sorted({str(item.metadata.get("from", "")) for item in thread_items} | {str(item.metadata.get("to", "")) for item in thread_items})
+    print(f"Thread: {thread_id}")
+    print(f"Participants: {', '.join(participants)}")
+    print(f"Items: {len(thread_items)}")
+    print()
+
+    previous_date = ""
+    for index, item in enumerate(thread_items, start=1):
+        meta = item.metadata
+        print(f"[{index}] {item.subject}")
+        print(f"    {meta.get('date', '')}{gap_days(previous_date, item.item_date)}")
+        print(f"    {meta.get('from', '')} -> {meta.get('to', '')}")
+        print(f"    {meta.get('kind', '')} | {meta.get('status', '')} | {item.slug}")
+        if item.reply_to:
+            print(f"    replies to: {item.reply_to}")
+        previous_date = item.item_date
+        print()
+    return 0
+
+
+def cmd_needs_reply(_: list[str]) -> int:
+    items = [item for item in iter_items() if item.metadata.get("status") == "needs-reply"]
+    if not items:
+        print("No correspondence items currently marked needs-reply.")
+        return 0
+
+    print("Needs reply")
+    print("===========")
+    print()
+    for item in items:
+        meta = item.metadata
+        print(f"- {item.subject}")
+        print(f"  date:   {meta.get('date', '')}")
+        print(f"  from:   {meta.get('from', '')}")
+        print(f"  to:     {meta.get('to', '')}")
+        if item.thread_id:
+            print(f"  thread: {item.thread_id}")
+        print(f"  slug:   {item.slug}")
+        print()
+    return 0
+
+
+def cmd_template(_: list[str]) -> int:
+    print(
+        "---\n"
+        "subject: \n"
+        "from: \n"
+        "to: \n"
+        f"date: {date.today().isoformat()}\n"
+        "kind: letter\n"
+        "status: draft\n"
+        "thread_id: \n"
+        "reply_to: \n"
+        "tags: []\n"
+        "---\n\n"
+        "Dear ...,\n\n"
+        "[Body]\n\n"
+        "— ...\n"
+    )
+    return 0
+
+
+def cmd_validate(_: list[str]) -> int:
+    items = list(iter_items())
+    if not items:
+        print("No items to validate.")
+        return 0
+
+    item_by_slug = {item.slug: item for item in items}
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    for item in items:
+        meta = item.metadata
+        for field in REQUIRED_FIELDS:
+            if not str(meta.get(field, "")).strip():
+                errors.append(f"{item.slug}: missing required field '{field}'")
+
+        kind = str(meta.get("kind", ""))
+        if kind and kind not in VALID_KINDS:
+            warnings.append(f"{item.slug}: unknown kind '{kind}'")
+
+        status = str(meta.get("status", ""))
+        if status and status not in VALID_STATUSES:
+            warnings.append(f"{item.slug}: unknown status '{status}'")
+
+        item_date = str(meta.get("date", ""))
+        if item_date and not DATE_RE.match(item_date[:10]):
+            errors.append(f"{item.slug}: date must look like YYYY-MM-DD")
+
+        reply_to = item.reply_to
+        if reply_to and reply_to not in item_by_slug:
+            errors.append(f"{item.slug}: reply_to target '{reply_to}' not found")
+        if reply_to and not item.thread_id:
+            errors.append(f"{item.slug}: reply_to requires thread_id")
+
+        if item.thread_id:
+            thread_members = [candidate for candidate in items if candidate.thread_id == item.thread_id]
+            if len(thread_members) == 1:
+                warnings.append(f"{item.slug}: only item in thread '{item.thread_id}'")
+
+        if not item.body.strip():
+            errors.append(f"{item.slug}: body is empty")
+
+    if errors:
+        print("Errors")
+        print("======")
+        for error in errors:
+            print(f"- {error}")
+        print()
+
+    if warnings:
+        print("Warnings")
+        print("========")
+        for warning in warnings:
+            print(f"- {warning}")
+        print()
+
+    print(f"Validated {len(items)} item(s): {len(errors)} error(s), {len(warnings)} warning(s).")
+    return 1 if errors else 0
+
+
+def print_usage() -> None:
+    print(
+        "correspondence — local correspondence archive\n\n"
+        "Usage:\n"
+        "  correspondence list\n"
+        "  correspondence show <slug>\n"
+        "  correspondence thread <thread-id>\n"
+        "  correspondence needs-reply\n"
+        "  correspondence template\n"
+        "  correspondence validate\n\n"
+        "This preserves addressed asynchronous exchange as artifact.\n"
+        "It should feel like a drawer of letters, not an inbox."
+    )
+
+
+def main(argv: list[str]) -> int:
+    commands = {
+        "list": cmd_list,
+        "show": cmd_show,
+        "thread": cmd_thread,
+        "needs-reply": cmd_needs_reply,
+        "template": cmd_template,
+        "validate": cmd_validate,
+    }
+
+    if len(argv) < 2 or argv[1] in {"-h", "--help", "help"}:
+        print_usage()
+        return 0
+
+    command = argv[1]
+    handler = commands.get(command)
+    if handler is None:
+        print(f"Unknown command: {command}", file=sys.stderr)
+        print_usage()
+        return 1
+
+    try:
+        return handler(argv[2:])
+    except BrokenPipeError:
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

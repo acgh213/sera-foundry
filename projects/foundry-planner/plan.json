@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-12",
+  "updated_at": "2026-03-14",
   "notes": [
     "This planner answers what the machine room is trying to do next, not just what exists.",
     "Edit this file by hand; the CLI is a reading and validation surface, not hidden state.",
@@ -151,6 +151,201 @@
         "Current pressure clusters around recurrence, correspondence, bounded agency, archive feeling, and small systems with soul."
       ],
       "updated_at": "2026-03-13"
+    },
+    {
+      "slug": "correspondence-archive",
+      "name": "correspondence-archive",
+      "status": "active",
+      "lane": "workflow",
+      "horizon": "now",
+      "summary": "Text-first archive of addressed asynchronous exchange that preserves thread, unresolvedness, and archival feel without collapsing into chat or inbox software.",
+      "path": "projects/correspondence-archive",
+      "current_goal": {
+        "title": "Prove correspondence as a distinct archive surface rather than notes, chat, or mailbox logic",
+        "why_now": "The first bounded v1 landed cleanly after the paired research memo, and now needs lived use to show whether its thread/unresolved/archive structure actually changes how thought is held.",
+        "success_signals": [
+          "The project preserves address and thread as meaningful structure",
+          "Needs-reply and thread views feel useful without becoming inbox culture",
+          "The archive feels like preserved exchange rather than records or generic notes"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use the archive in real correspondence-like situations and note what is actually missing before adding more views",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "If lived use proves one deeper surface is needed, consider participant views or lightweight project/theme linkage as the next bounded slice",
+          "owner": "runner",
+          "state": "queued"
+        },
+        {
+          "text": "Settle the Phase A artifacts (research memo, project plan, archive build, registry/planner updates) into a clean foundry commit",
+          "owner": "main",
+          "state": "queued"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "policy",
+          "text": "Preserve address, delay, reply-threading, and archival feel; do not let it become inbox software, chat, or pseudo-intimacy infrastructure",
+          "state": "open"
+        },
+        {
+          "type": "feature",
+          "text": "Only add participant or project/theme views if ordinary use proves the current shape insufficient",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Use thread and needs-reply during actual reflective or asynchronous writing situations",
+          "Check whether the archive still feels artifact-like after more than seeded examples",
+          "Determine whether missing next views are truly needed or merely plausible"
+        ],
+        "notes": [
+          "The key test is whether correspondence changes the texture of thought compared with chat/notes.",
+          "It should remain a drawer of letters, not a queue of obligations."
+        ]
+      },
+      "context": [
+        "Phase A pairing worked as intended: research memo first, then bounded implementation.",
+        "The project now exists alongside the correspondence-as-thought research memo and the correspondence/archive project plan."
+      ],
+      "updated_at": "2026-03-14"
+    },
+    {
+      "slug": "field-notes",
+      "name": "field-notes",
+      "status": "active",
+      "lane": "workflow",
+      "horizon": "now",
+      "summary": "Text-first archive of lived fragments, overheard lines, small weird moments, recurring motifs, and subtle texture that should remain observation before becoming interpretation or project material.",
+      "path": "projects/field-notes",
+      "current_goal": {
+        "title": "Prove field notes as a humane texture/archive surface rather than capture sludge or surveillance",
+        "why_now": "The first bounded v1 landed cleanly after the institutional-temperature research memo, and now needs lived use to show whether recent/returning/by-tag views preserve subtle signals responsibly.",
+        "success_signals": [
+          "The archive preserves observations as observations without forcing meaning too early",
+          "Returning and by-tag views reveal useful texture without paranoia or overreach",
+          "The project feels distinct from notes, journaling, and monitoring systems"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use the field notes archive with real observations/fragments and note what feels missing before adding deeper review surfaces",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "If lived use proves it useful, consider a light promotion-candidate or recurrence-deepening view as the next bounded slice",
+          "owner": "runner",
+          "state": "queued"
+        },
+        {
+          "text": "Settle the Phase B artifacts (research memo, project plan, field-notes build, registry/planner updates) into a clean foundry commit",
+          "owner": "main",
+          "state": "queued"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "policy",
+          "text": "Keep the project private/local, ambiguity-friendly, and observation-first; do not let it become surveillance, accusation theater, or journaling-by-force",
+          "state": "open"
+        },
+        {
+          "type": "feature",
+          "text": "Only add deeper recurrence/promotion surfaces if ordinary use proves the current shape insufficient",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Use recent/returning/by-tag during real observation and reflective work",
+          "Check whether the current note sections (Observation/Interpretation/Impact) help without over-structuring every fragment",
+          "See whether recurrence and subtle temperature signals remain legible without becoming accusatory or overconfident"
+        ],
+        "notes": [
+          "The key test is whether the archive holds texture and ambiguity without becoming sludge or surveillance.",
+          "The institutional-temperature memo should guide caution about pattern-recognition, uncertainty, and impact language."
+        ]
+      },
+      "context": [
+        "Phase B pairing worked as intended: research memo first, then bounded implementation.",
+        "The project now exists alongside the institutional-temperature memo and the field-notes project plan."
+      ],
+      "updated_at": "2026-03-14"
+    },
+    {
+      "slug": "voice-style-workshop",
+      "name": "voice-style-workshop",
+      "status": "active",
+      "lane": "workflow",
+      "horizon": "now",
+      "summary": "Text-first workshop for charged style fragments, tonal moves, and structural gestures, keeping voice pressure legible without collapsing into rules or quote-hoarding.",
+      "path": "projects/voice-style-workshop",
+      "current_goal": {
+        "title": "Prove the fragment cabinet as a live style-pressure surface rather than a scrapbook or doctrine engine",
+        "why_now": "The first bounded v1 landed after the project plan and small-systems-with-soul memo, and now needs lived use to show whether list/show/returning/by-tag/by-source are enough.",
+        "success_signals": [
+          "Fragments still feel charged and individual after more than the seed set",
+          "Returning, by-tag, and by-source views help expose recurrence and restraint clearly",
+          "The project stays distinct from notes, drafts, and reading pressure"
+        ]
+      },
+      "next_steps": [
+        {
+          "text": "Use the workshop on real lines, paragraph moves, and anti-patterns and note what feels missing before adding style-note surfaces",
+          "owner": "main",
+          "state": "ready"
+        },
+        {
+          "text": "If lived use proves the fragment cabinet useful, consider a second slice for pattern notes or anti-pattern review",
+          "owner": "runner",
+          "state": "queued"
+        },
+        {
+          "text": "Settle the Phase C artifacts (research memo, project plan, workshop build, registry/planner updates) into a clean foundry commit",
+          "owner": "main",
+          "state": "queued"
+        }
+      ],
+      "blocked": [],
+      "requests": [
+        {
+          "type": "policy",
+          "text": "Keep the workshop local, inspectable, and pressure-oriented; do not let it become metrics, coaching doctrine, or generic line-hoarding",
+          "state": "open"
+        },
+        {
+          "type": "feature",
+          "text": "Only add style-note or pattern surfaces if ordinary use proves the current fragment/archive views insufficient",
+          "state": "watching"
+        }
+      ],
+      "testing": {
+        "state": "needs-live-use",
+        "needs": [
+          "Use the fragment archive during actual writing and revision rather than only seeded examples",
+          "Check whether by-source and by-tag stay useful as more fragments accumulate",
+          "See whether explicit why-it-works and use-with-care notes sharpen judgment without becoming bureaucracy"
+        ],
+        "notes": [
+          "The key test is whether the workshop sharpens taste while preserving aliveness.",
+          "It should feel like a cabinet of charged fragments, not a style management layer."
+        ]
+      },
+      "context": [
+        "Phase C pairing worked as intended: project plan and design memo first, bounded implementation second.",
+        "The seeded set includes sentence, paragraph, tone, structure, and anti-pattern shapes tied back to real foundry notes."
+      ],
+      "updated_at": "2026-03-14"
     },
     {
       "slug": "drift-extractor",
