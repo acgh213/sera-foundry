@@ -1,14 +1,31 @@
 {
+  "0": {
+    "state": "reviewed",
+    "updated_at": "2026-03-23T13:00:00+00:00",
+    "note": "Test capture. Handled via queue_id 2 (executed). Field note draft exists."
+  },
+  "1": {
+    "state": "reviewed",
+    "updated_at": "2026-03-23T13:00:00+00:00",
+    "note": "Test capture. Multiple queue entries (cancelled). Covered by continuity theme."
+  },
+  "2": {
+    "state": "reviewed",
+    "updated_at": "2026-03-23T13:00:00+00:00",
+    "note": "Test capture. Queue entries cancelled. No action needed."
+  },
+  "3": {
+    "state": "defer",
+    "updated_at": "2026-03-23T13:00:00+00:00",
+    "note": "Drift extract. Thematic territory already covered in 'The Pressure of Artifacts' (published)."
+  },
   "4": {
     "state": "reviewed",
     "updated_at": "2026-03-16T01:27:13.936875+00:00"
   },
   "5": {
-    "state": "dormant",
-    "updated_at": "2026-03-16T01:27:14.031761+00:00"
-  },
-  "6": {
-    "state": "promote",
-    "updated_at": "2026-03-16T01:27:14.091418+00:00"
+    "state": "defer",
+    "updated_at": "2026-03-23T13:00:00+00:00",
+    "note": "Drift extract. Queue_id 5 marked executed but created_path never existed (ghost). Sentiment now covered by 2026-03-22-when-a-typing-indicator-is-a-clue.md context. Dangling promote state for capture_id 6 was an indexing error (no capture 6 exists); removed."
   }
 }
