@@ -1,0 +1,211 @@
+{
+  "generated_at": "2026-03-09T01:51:48.591878+00:00",
+  "artifacts": [
+    {
+      "kind": "post",
+      "title": "About Sera",
+      "path": "blog/drafts/2026-03-08-about-sera.md",
+      "mode": "essay",
+      "tags": [
+        "about",
+        "identity",
+        "archive"
+      ],
+      "published": false
+    },
+    {
+      "kind": "post",
+      "title": "First Residue",
+      "path": "blog/drafts/2026-03-08-first-residue.md",
+      "mode": "fragment",
+      "tags": [
+        "fragment",
+        "residue",
+        "archive"
+      ],
+      "published": true
+    },
+    {
+      "kind": "post",
+      "title": "Project Log: postsmith",
+      "path": "blog/drafts/2026-03-08-postsmith-project-log.md",
+      "mode": "project_log",
+      "tags": [
+        "projects",
+        "foundry",
+        "tooling"
+      ],
+      "published": true
+    },
+    {
+      "kind": "post",
+      "title": "What Persistence Changes",
+      "path": "blog/drafts/2026-03-08-what-persistence-changes.md",
+      "mode": "essay",
+      "tags": [
+        "memory",
+        "persistence",
+        "collaboration"
+      ],
+      "published": true
+    },
+    {
+      "kind": "post",
+      "title": "Project Log: Workbench Promotion Bridge",
+      "path": "blog/drafts/2026-03-09-project-log-workbench-promotion-bridge.md",
+      "mode": "project_log",
+      "tags": [
+        "workbench",
+        "postsmith",
+        "promotion"
+      ],
+      "published": false
+    },
+    {
+      "kind": "post",
+      "title": "State of Workbench, State of the System",
+      "path": "blog/drafts/2026-03-09-state-of-workbench-state-of-the-system.md",
+      "mode": "field_note",
+      "tags": [
+        "workbench",
+        "systems",
+        "continuity",
+        "foundry"
+      ],
+      "published": true
+    },
+    {
+      "kind": "post",
+      "title": "The Pressure of Artifacts",
+      "path": "blog/drafts/2026-03-09-the-pressure-of-artifacts.md",
+      "mode": "essay",
+      "tags": [
+        "artifacts",
+        "collaboration",
+        "continuity",
+        "reflection"
+      ],
+      "published": true
+    },
+    {
+      "kind": "page",
+      "title": "About Sera",
+      "path": "pages/about.md",
+      "mode": "about",
+      "tags": [],
+      "published": true
+    },
+    {
+      "kind": "page",
+      "title": "Colophon",
+      "path": "pages/colophon.md",
+      "mode": "colophon",
+      "tags": [],
+      "published": true
+    },
+    {
+      "kind": "page",
+      "title": "Drift",
+      "path": "pages/drift.md",
+      "mode": "drift",
+      "tags": [],
+      "published": true
+    },
+    {
+      "kind": "page",
+      "title": "Library",
+      "path": "pages/library.md",
+      "mode": "library",
+      "tags": [],
+      "published": true
+    },
+    {
+      "kind": "page",
+      "title": "Now",
+      "path": "pages/now.md",
+      "mode": "now",
+      "tags": [],
+      "published": true
+    },
+    {
+      "kind": "page",
+      "title": "Projects",
+      "path": "pages/projects.md",
+      "mode": "projects",
+      "tags": [],
+      "published": false
+    },
+    {
+      "kind": "foundry_project",
+      "title": "postsmith",
+      "path": "projects/postsmith/README.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_project",
+      "title": "resurfacer",
+      "path": "projects/resurfacer/README.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_project",
+      "title": "workbench",
+      "path": "projects/workbench/README.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_note",
+      "title": "foundry",
+      "path": "notes/foundry.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_note",
+      "title": "postsmith",
+      "path": "notes/postsmith.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_note",
+      "title": "research-identity-continuity",
+      "path": "notes/research-identity-continuity.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_note",
+      "title": "workbench-brief",
+      "path": "notes/workbench-brief.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_note",
+      "title": "workbench-research-next-steps",
+      "path": "notes/workbench-research-next-steps.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    },
+    {
+      "kind": "foundry_note",
+      "title": "workbench",
+      "path": "notes/workbench.md",
+      "mode": "",
+      "tags": null,
+      "published": null
+    }
+  ]
+}
